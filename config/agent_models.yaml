@@ -1,0 +1,72 @@
+agents:
+  planner_agent:
+    provider: openrouter
+    model_config:
+      model: openai/gpt-4o-mini
+      temperature: 0.7
+    max_iterations: 10
+    system_prompt_file: config/agents/planner/AGENT.md
+
+  supervisor_agent:
+    provider: openrouter
+    model_config:
+      model: openai/gpt-4o-mini
+      temperature: 0.5
+    max_iterations: 10
+    system_prompt_file: config/agents/supervisor/AGENT.md
+
+  literature_agent:
+    provider: openrouter
+    model_config:
+      model: openai/gpt-4o-mini
+      temperature: 0.5
+    max_iterations: 20
+    system_prompt_file: config/agents/literature/AGENT.md
+
+  extractor_agent:
+    provider: openrouter
+    model_config:
+      model: openai/gpt-4o-mini
+      temperature: 0.3
+    max_iterations: 15
+    system_prompt_file: config/agents/extractor/AGENT.md
+
+  challenger_agent:
+    provider: openrouter
+    model_config:
+      model: openai/gpt-4o-mini
+      temperature: 0.7
+    max_iterations: 15
+    system_prompt_file: config/agents/challenger/AGENT.md
+
+  verifier_agent:
+    provider: openrouter
+    model_config:
+      model: openai/gpt-4o-mini
+      temperature: 0.1
+    max_iterations: 10
+    system_prompt_file: config/agents/verifier/AGENT.md
+
+  ledger_agent:
+    provider: openrouter
+    model_config:
+      model: openai/gpt-4o-mini
+      temperature: 0.1
+    max_iterations: 5
+    system_prompt_file: config/agents/ledger/AGENT.md
+
+  evidence_graph_agent:
+    provider: openrouter
+    model_config:
+      model: openai/gpt-4o-mini
+      temperature: 0.1
+    max_iterations: 5
+    system_prompt_file: config/agents/evidence_graph/AGENT.md
+
+  synthesizer_agent:
+    provider: openrouter
+    model_config:
+      model: openai/gpt-4o-mini
+      temperature: 0.7
+    max_iterations: 15
+    system_prompt_file: config/agents/synthesizer/AGENT.md

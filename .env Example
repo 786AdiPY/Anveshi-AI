@@ -1,0 +1,48 @@
+# Your data storage path(required)
+WORKING_DIRECTORY = ./data/
+
+# Configuration directory path (optional)
+# All config files (agent_models.yaml, agents/, mcp.yaml) are relative to this directory.
+# Default is config/
+# Use 'config_local' for local development to avoid Git tracking (already in .gitignore)
+CONFIG_DIRECTORY = config
+
+# Conda environment name(required)
+CONDA_ENV = verity-ai
+
+# ChromeDriver executable path(required)
+CHROMEDRIVER_PATH = ./chromedriver-linux64/chromedriver
+
+# Firecrawl API key (optional)
+# Note: If this key is missing, query capabilities may be reduced
+FIRECRAWL_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+# fastCRW (Firecrawl-compatible web scraper; single binary, self-host or cloud) (optional)
+# API key for the managed cloud; optional for self-host
+CRW_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# Defaults to the managed cloud; override for self-host (e.g. http://localhost:3000)
+CRW_API_URL = https://fastcrw.com/api
+
+# OpenAI API key (optional)
+OPENAI_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+# OpenRouter API key (optional)
+OPENROUTER_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+# Anthropic API key (optional)
+ANTHROPIC_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+# Google API key (optional)
+GOOGLE_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+# LangChain API key (optional)
+# Used for monitoring the processing
+LANGCHAIN_TRACING_V2 = false
+LANGCHAIN_PROJECT = "Multi-agent-DataAnalysis"
+LANGCHAIN_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+# MCP (Model Context Protocol) Settings (optional)
+# Tavily API key for web-search MCP server
+TAVILY_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# GitHub token for github MCP server
+GITHUB_TOKEN = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
