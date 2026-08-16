@@ -1,4 +1,4 @@
-# Verity-AI (Previously AI-Data-Analysis-MultiAgent)
+#Pramaan-AI: Multi-Agent Framework for Research
 
 **Author:** [786AdiPY](https://github.com/786AdiPY)
 
