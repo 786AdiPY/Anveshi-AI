@@ -176,13 +176,14 @@ button {
 }
 
 .page-container {
-  max-width: 1180px;
+  max-width: 100%;
+  width: 100%;
   margin: 0 auto;
-  padding: 32px 32px 64px;
+  padding: 24px 32px 48px;
 }
 
 .dashboard-page {
-  max-width: 1480px;
+  max-width: 100%;
 }
 
 .muted {
@@ -198,14 +199,83 @@ button {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 28px;
-  padding: 22px 16px;
+  gap: 24px;
+  padding: 18px 14px;
   background: var(--bg-card);
   border-right: 1px solid var(--border-color);
   position: sticky;
   top: 0;
   height: 100vh;
   overflow-y: auto;
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), padding 0.25s;
+  z-index: 40;
+}
+
+.sidebar--collapsed {
+  width: 68px;
+  padding: 18px 10px;
+  align-items: center;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 2px;
+}
+
+.sidebar--collapsed .sidebar-header {
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, background 0.15s;
+}
+
+.sidebar-toggle-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+}
+
+.sidebar--collapsed .sidebar-brand {
+  padding: 0;
+  justify-content: center;
+}
+
+.sidebar--collapsed .sidebar-nav {
+  width: 100%;
+  align-items: center;
+}
+
+.sidebar--collapsed .sidebar-link {
+  justify-content: center;
+  padding: 10px;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+}
+
+.sidebar-collapsed-logo-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sidebar-brand {
@@ -217,6 +287,7 @@ button {
 }
 
 .brand-mark {
+  position: relative;
   width: 32px;
   height: 32px;
   border-radius: 8px;
@@ -229,12 +300,36 @@ button {
   overflow: hidden;
   padding: 3px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .brand-logo-img {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  transition: opacity 0.15s;
+}
+
+.brand-hover-icon {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  opacity: 0;
+  color: var(--text-primary);
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.sidebar-collapsed-logo-btn:hover .brand-logo-img {
+  opacity: 0;
+}
+
+.sidebar-collapsed-logo-btn:hover .brand-hover-icon {
+  opacity: 1;
+}
+
+.sidebar-collapsed-logo-btn:hover .brand-mark {
+  background: var(--bg-secondary);
+  border-color: var(--border-glow);
 }
 
 .sidebar-brand-text {
