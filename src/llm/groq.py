@@ -1,7 +1,4 @@
 from typing import Type
-
-from langchain_groq import ChatGroq
-
 from .base import BaseProvider
 
 
@@ -10,4 +7,9 @@ class ChatGroqProvider(BaseProvider):
 
     def get_model_class(self) -> Type:
         """Returns the ChatGroq class."""
-        return ChatGroq
+        try:
+            from langchain_groq import ChatGroq
+            return ChatGroq
+        except ImportError:
+            from langchain_community.chat_models import ChatGroq
+            return ChatGroq
