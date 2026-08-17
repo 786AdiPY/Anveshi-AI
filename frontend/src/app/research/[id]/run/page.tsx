@@ -291,20 +291,23 @@ export default function LiveRunPage() {
   }));
 
   const edges: Edge[] = EDGES.map(([source, target]) => {
-    const isCompleted = status === "completed";
-    const isSourceActive = isCompleted || nodeStatuses[source] === "running" || nodeStatuses[source] === "completed";
-    const isTargetActive = isCompleted || nodeStatuses[target] === "running" || nodeStatuses[target] === "completed";
-    const isAnimated = !isCompleted && (nodeStatuses[source] === "running" || nodeStatuses[target] === "running");
+    // Green only when both ends are actually done — everything else (waiting,
+    // running, failed) is one neutral color. A dashed line still animates
+    // while a node is running, so activity is visible without an extra color.
+    const bothCompleted =
+      status === "completed" ||
+      (nodeStatuses[source] === "completed" && nodeStatuses[target] === "completed");
+    const isAnimated = !bothCompleted && (nodeStatuses[source] === "running" || nodeStatuses[target] === "running");
 
     return {
       id: `${source}-${target}`,
       source,
       target,
       animated: isAnimated,
-      markerEnd: { type: MarkerType.ArrowClosed, color: isCompleted || (isSourceActive && isTargetActive) ? "#10b981" : "#232327" },
+      markerEnd: { type: MarkerType.ArrowClosed, color: bothCompleted ? "#10b981" : "#3f3f46" },
       style: {
-        stroke: isCompleted ? "#10b981" : isAnimated ? "#8b5cf6" : isSourceActive && isTargetActive ? "#10b981" : "#232327",
-        strokeWidth: isCompleted ? 2 : isAnimated ? 2.5 : 1.5,
+        stroke: bothCompleted ? "#10b981" : "#3f3f46",
+        strokeWidth: bothCompleted ? 2 : 1.5,
       },
     };
   });
@@ -331,8 +334,8 @@ export default function LiveRunPage() {
       {/* Top Header Bar */}
       <div className="run-header">
         <div className="run-header-left">
-          <Link href="/" className="back-link">
-            <ArrowLeft size={15} /> Back
+          <Link href="/runs" className="back-link">
+            <ArrowLeft size={15} /> Back to Research Runs
           </Link>
           <span className={`status-badge status-badge-${status}`}>
             ● {status === "running" ? "Running" : status === "completed" ? "Completed" : status}
