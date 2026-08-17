@@ -96,10 +96,12 @@ function Nav() {
   );
 }
 
+import Image from "next/image";
+
 function Mark() {
   return (
     <span className="lp-mark" aria-hidden="true">
-      <ShieldCheck size={18} strokeWidth={2.2} />
+      <Image src="/logo.png" alt="Anveshi AI Logo" width={22} height={22} className="brand-logo-img" priority unoptimized />
     </span>
   );
 }

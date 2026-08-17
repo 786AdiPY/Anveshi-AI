@@ -222,6 +222,13 @@ export default function LiveRunPage() {
   const latest = events[events.length - 1];
 
   const nodeStatuses = useMemo(() => {
+    if (status === "completed") {
+      const allCompleted: Record<string, AgentNodeStatus> = {};
+      for (const key of AGENT_ORDER) {
+        allCompleted[key] = "completed";
+      }
+      return allCompleted;
+    }
     if (events.length === 0) {
       const fallbackStatuses: Record<string, AgentNodeStatus> = {};
       for (const key of AGENT_ORDER) {
@@ -261,7 +268,7 @@ export default function LiveRunPage() {
   const liveCurrentDuration = currentAgent ? Math.max(0, runtime - lastEventElapsed) : 0;
 
   function nodeDetail(key: string): string {
-    if (events.length === 0) {
+    if (events.length === 0 || status === "completed") {
       return DEFAULT_NODE_TIMINGS[key].detail;
     }
     const st = nodeStatuses[key];
@@ -284,19 +291,20 @@ export default function LiveRunPage() {
   }));
 
   const edges: Edge[] = EDGES.map(([source, target]) => {
-    const isSourceActive = nodeStatuses[source] === "running" || nodeStatuses[source] === "completed";
-    const isTargetActive = nodeStatuses[target] === "running" || nodeStatuses[target] === "completed";
-    const isAnimated = nodeStatuses[source] === "running" || nodeStatuses[target] === "running";
+    const isCompleted = status === "completed";
+    const isSourceActive = isCompleted || nodeStatuses[source] === "running" || nodeStatuses[source] === "completed";
+    const isTargetActive = isCompleted || nodeStatuses[target] === "running" || nodeStatuses[target] === "completed";
+    const isAnimated = !isCompleted && (nodeStatuses[source] === "running" || nodeStatuses[target] === "running");
 
     return {
       id: `${source}-${target}`,
       source,
       target,
       animated: isAnimated,
-      markerEnd: { type: MarkerType.ArrowClosed, color: isAnimated ? "#8b5cf6" : "#232327" },
+      markerEnd: { type: MarkerType.ArrowClosed, color: isCompleted || (isSourceActive && isTargetActive) ? "#10b981" : "#232327" },
       style: {
-        stroke: isAnimated ? "#8b5cf6" : isSourceActive && isTargetActive ? "#4b5563" : "#232327",
-        strokeWidth: isAnimated ? 2.5 : 1.5,
+        stroke: isCompleted ? "#10b981" : isAnimated ? "#8b5cf6" : isSourceActive && isTargetActive ? "#10b981" : "#232327",
+        strokeWidth: isCompleted ? 2 : isAnimated ? 2.5 : 1.5,
       },
     };
   });
