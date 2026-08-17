@@ -8,32 +8,33 @@ import {
   useReactFlow,
   Handle,
   Position,
+  MarkerType,
   type Node,
   type Edge,
   type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { FileText, Maximize2, ZoomIn, ZoomOut } from "lucide-react";
+import dagre from "@dagrejs/dagre";
+import { FileText, Maximize2, ZoomIn, ZoomOut, Check, AlertTriangle, ArrowDown } from "lucide-react";
 import { EvidencePanel, type GraphNodeData } from "@/components/EvidencePanel";
 
 export type GraphEdgeData = { id: string; source: string; target: string; type: string };
 
 /* -------------------------------------------------------------------------- */
-/* Custom ReactFlow Nodes for Knowledge Graph Network                         */
+/* Custom ReactFlow Nodes (Card-based matching DAG layout)                    */
 /* -------------------------------------------------------------------------- */
 
 function MainClaimNode({ data }: NodeProps & { data: { label: string; stats?: string } }) {
   return (
     <div className="graph-node-main-claim">
-      <Handle type="source" position={Position.Right} id="right" className="graph-handle" />
+      <Handle type="target" position={Position.Top} className="graph-handle" />
+      <Handle type="source" position={Position.Bottom} className="graph-handle" />
       <div className="graph-node-main-claim__badge">
         <span className="graph-node-main-claim__dot" />
-        <span>MAIN RESEARCH QUESTION</span>
+        <span>RESEARCH QUESTION</span>
       </div>
       <div className="graph-node-main-claim__title">{data.label}</div>
-      <div className="graph-node-main-claim__footer">
-        {data.stats || "Core Hypothesis • Evidence Network"}
-      </div>
+      {data.stats && <div className="graph-node-main-claim__footer">{data.stats}</div>}
     </div>
   );
 }
@@ -54,13 +55,13 @@ function ClaimCustomNode({
 
   return (
     <div className={`graph-node-claim ${isBad ? "graph-node-claim--bad" : "graph-node-claim--good"}`}>
-      <Handle type="target" position={Position.Left} id="target-left" className="graph-handle" />
-      <Handle type="source" position={Position.Right} id="source-right" className="graph-handle" />
+      <Handle type="target" position={Position.Top} className="graph-handle" />
+      <Handle type="source" position={Position.Bottom} className="graph-handle" />
 
       <div className="graph-node-claim__header">
         <div className="graph-node-claim__badge">
-          <span className="graph-node-claim__dot" />
-          <span>{isBad ? "CONTRADICTS CLAIM" : "SUPPORTS CLAIM"}</span>
+          {isBad ? <AlertTriangle size={12} color="#f87171" /> : <Check size={12} color="#34d399" />}
+          <span>{isBad ? "! CONTRADICTING" : "✓ CLAIM"}</span>
         </div>
         <span className="graph-node-claim__status-tag" style={{ borderColor: statusColor, color: statusColor }}>
           {data.verificationStatus || "PASS"}
@@ -77,7 +78,7 @@ function ClaimCustomNode({
               style={{ width: `${Math.round(data.confidence * 100)}%`, backgroundColor: statusColor }}
             />
           </div>
-          <span className="graph-node-claim__confidence-val">{Math.round(data.confidence * 100)}% Verified</span>
+          <span className="graph-node-claim__confidence-val">{Math.round(data.confidence * 100)}% confidence</span>
         </div>
       )}
     </div>
@@ -96,18 +97,19 @@ function SourceCustomNode({
 }) {
   return (
     <div className="graph-node-source">
-      <Handle type="target" position={Position.Left} id="target-left" className="graph-handle" />
+      <Handle type="target" position={Position.Top} className="graph-handle" />
+      <Handle type="source" position={Position.Bottom} className="graph-handle" />
 
       <div className="graph-node-source__header">
-        <FileText size={13} className="graph-node-source__icon" />
-        <span className="graph-node-source__type">{data.sourceType || "DOCUMENT SOURCE"}</span>
+        <FileText size={12} className="graph-node-source__icon" />
+        <span className="graph-node-source__type">{data.sourceType || "SOURCE"}</span>
       </div>
 
       <div className="graph-node-source__title">{data.label}</div>
 
       <div className="graph-node-source__meta">
         {data.authors && data.authors.length > 0 ? data.authors[0] : "Verified Source"}
-        {data.year ? ` • ${data.year}` : ""}
+        {data.year ? ` '${String(data.year).slice(-2)}` : ""}
       </div>
     </div>
   );
@@ -121,10 +123,51 @@ const customNodeTypes = {
 
 const LEGEND: { label: string; color: string }[] = [
   { label: "Supports", color: "#10b981" },
-  { label: "Contradicts", color: "#ef4444" },
-  { label: "Main Claim", color: "#a855f7" },
+  { label: "Challenges", color: "#ef4444" },
+  { label: "Research Question", color: "#a855f7" },
   { label: "Source", color: "#38bdf8" },
 ];
+
+/* -------------------------------------------------------------------------- */
+/* Dagre Automatic Directed Acyclic Graph (DAG) Sugiyama Layout              */
+/* -------------------------------------------------------------------------- */
+
+const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = "TB") => {
+  const dagreGraph = new dagre.graphlib.Graph();
+  dagreGraph.setDefaultEdgeLabel(() => ({}));
+
+  dagreGraph.setGraph({ rankdir: direction, nodesep: 60, ranksep: 90 });
+
+  nodes.forEach((node) => {
+    const width = node.type === "mainClaim" ? 320 : node.type === "claimNode" ? 300 : 260;
+    const height = node.type === "mainClaim" ? 120 : node.type === "claimNode" ? 130 : 90;
+    dagreGraph.setNode(node.id, { width, height });
+  });
+
+  edges.forEach((edge) => {
+    dagreGraph.setEdge(edge.source, edge.target);
+  });
+
+  dagre.layout(dagreGraph);
+
+  const layoutedNodes = nodes.map((node) => {
+    const nodeWithPosition = dagreGraph.node(node.id);
+    const width = node.type === "mainClaim" ? 320 : node.type === "claimNode" ? 300 : 260;
+    const height = node.type === "mainClaim" ? 120 : node.type === "claimNode" ? 130 : 90;
+
+    return {
+      ...node,
+      targetPosition: direction === "TB" ? Position.Top : Position.Left,
+      sourcePosition: direction === "TB" ? Position.Bottom : Position.Right,
+      position: {
+        x: nodeWithPosition.x - width / 2,
+        y: nodeWithPosition.y - height / 2,
+      },
+    };
+  });
+
+  return { nodes: layoutedNodes, edges };
+};
 
 function CanvasInner({
   nodesData,
@@ -137,9 +180,10 @@ function CanvasInner({
 }) {
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const [selected, setSelected] = useState<GraphNodeData | null>(null);
+  const [layoutDirection, setLayoutDirection] = useState<"TB" | "LR">("TB");
 
   /* ------------------------------------------------------------------------ */
-  /* Left-to-Right Hierarchical Knowledge Network Layout Math                  */
+  /* Build Raw Nodes and Edges then apply Dagre Layout                        */
   /* ------------------------------------------------------------------------ */
   const { nodes, edges } = useMemo(() => {
     if (!nodesData || nodesData.length === 0) {
@@ -159,33 +203,31 @@ function CanvasInner({
       };
     }
 
-    const formattedNodes: Node[] = [];
-    const formattedEdges: Edge[] = [];
+    const rawNodes: Node[] = [];
+    const rawEdges: Edge[] = [];
 
-    // Column 1: Main Research Question (Left)
-    const mainY = Math.max(120, (claimNodes.length * 180) / 2 - 40);
-    formattedNodes.push({
+    // 1. Root Question Node
+    rawNodes.push({
       id: mainNode.id,
       type: "mainClaim",
-      position: { x: 40, y: mainY },
+      position: { x: 0, y: 0 },
       data: {
         label: mainNode.label,
         stats: `${claimNodes.length} Claims • ${paperNodes.length} Sources Verified`,
       },
     });
 
-    // Column 2: Claims (Center)
-    claimNodes.forEach((c, idx) => {
-      const claimY = 40 + idx * 180;
+    // 2. Claim Nodes
+    claimNodes.forEach((c) => {
       const isContradicted =
         c.data.verification_status === "FAIL" ||
         edgesData.some((e) => e.target === c.id && e.type === "contradicts");
-      const confidence = typeof c.data.confidence === "number" ? c.data.confidence : 0.85;
+      const confidence = typeof c.data.confidence === "number" ? c.data.confidence : 0.88;
 
-      formattedNodes.push({
+      rawNodes.push({
         id: c.id,
         type: "claimNode",
-        position: { x: 440, y: claimY },
+        position: { x: 0, y: 0 },
         data: {
           label: c.label,
           isContradicted,
@@ -194,14 +236,22 @@ function CanvasInner({
         },
       });
 
-      // Connect Main Node -> Claim Node
-      formattedEdges.push({
+      // Question -> Claim Edge
+      rawEdges.push({
         id: `e-main-${c.id}`,
         source: mainNode!.id,
         target: c.id,
-        sourceHandle: "right",
-        targetHandle: "target-left",
+        label: isContradicted ? "challenges" : "supports",
+        labelStyle: { fill: isContradicted ? "#f87171" : "#34d399", fontWeight: 600, fontSize: 11 },
+        labelBgStyle: { fill: "#111827", fillOpacity: 0.9, rx: 4, ry: 4 },
+        labelBgPadding: [6, 3],
         animated: true,
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: isContradicted ? "#ef4444" : "#10b981",
+          width: 16,
+          height: 16,
+        },
         style: {
           stroke: isContradicted ? "#ef4444" : "#10b981",
           strokeWidth: 2,
@@ -209,79 +259,86 @@ function CanvasInner({
       });
     });
 
-    // Column 3: Paper / Document Sources (Right)
-    const paperYMap = new Map<string, number>();
-    paperNodes.forEach((p, idx) => {
-      // Find connected claim if any
-      const connEdge = edgesData.find((e) => e.source === p.id || e.target === p.id);
-      let pY = 40 + idx * 140;
-
-      if (connEdge) {
-        const claimIdx = claimNodes.findIndex((c) => c.id === connEdge.target || c.id === connEdge.source);
-        if (claimIdx !== -1) {
-          pY = 40 + claimIdx * 180 + (idx % 2) * 80;
-        }
-      }
-      paperYMap.set(p.id, pY);
-
-      formattedNodes.push({
+    // 3. Paper / Source Nodes
+    paperNodes.forEach((p) => {
+      rawNodes.push({
         id: p.id,
         type: "sourceNode",
-        position: { x: 860, y: pY },
+        position: { x: 0, y: 0 },
         data: {
           label: p.label,
           authors: Array.isArray(p.data?.authors) ? (p.data.authors as string[]) : undefined,
           year: typeof p.data?.year === "number" ? (p.data.year as number) : undefined,
-          sourceType: typeof p.data?.source_type === "string" ? String(p.data.source_type) : "PAPER",
+          sourceType: typeof p.data?.source_type === "string" ? String(p.data.source_type) : "SOURCE",
         },
       });
     });
 
-    // Connect Paper Sources -> Claims or Claims -> Papers
+    // 4. Edges from Sources -> Claims or Claims -> Sources
     edgesData.forEach((e) => {
-      if (!formattedEdges.some((fe) => fe.id === e.id)) {
-        const isSourcePaper = paperNodes.some((p) => p.id === e.source);
-        formattedEdges.push({
+      if (!rawEdges.some((re) => re.id === e.id)) {
+        const isContradicts = e.type === "contradicts";
+        const strokeColor = isContradicts ? "#ef4444" : "#38bdf8";
+
+        rawEdges.push({
           id: e.id,
-          source: isSourcePaper ? e.target : e.source,
-          target: isSourcePaper ? e.source : e.target,
-          sourceHandle: "source-right",
-          targetHandle: "target-left",
+          source: e.source,
+          target: e.target,
+          label: isContradicts ? "challenges" : "supports",
+          labelStyle: { fill: isContradicts ? "#f87171" : "#38bdf8", fontWeight: 600, fontSize: 11 },
+          labelBgStyle: { fill: "#111827", fillOpacity: 0.9, rx: 4, ry: 4 },
+          labelBgPadding: [6, 3],
           animated: false,
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            color: strokeColor,
+            width: 14,
+            height: 14,
+          },
           style: {
-            stroke: e.type === "contradicts" ? "#ef4444" : "#38bdf8",
-            strokeWidth: 1.5,
-            strokeDasharray: e.type === "contradicts" ? "4,4" : undefined,
+            stroke: strokeColor,
+            strokeWidth: 1.6,
+            strokeDasharray: isContradicts ? "4,4" : undefined,
           },
         });
       }
     });
 
-    return { nodes: formattedNodes, edges: formattedEdges };
-  }, [nodesData, edgesData]);
+    // Apply Dagre Sugiyama Layout
+    return getLayoutedElements(rawNodes, rawEdges, layoutDirection);
+  }, [nodesData, edgesData, layoutDirection]);
 
   const claims = nodesData.filter((n) => n.type === "claim");
 
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
-      {/* Top Legend Toolbar */}
+      {/* Top Legend & Layout Direction Controls Toolbar */}
       <div className="graph-toolbar flex items-center justify-between px-4 py-2 bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800 text-xs">
         <div className="flex items-center gap-4">
           {LEGEND.map(({ label, color }) => (
-            <span key={label} className="flex items-center gap-1.5 text-zinc-400">
+            <span key={label} className="flex items-center gap-1.5 text-zinc-400 font-medium">
               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
               {label}
             </span>
           ))}
         </div>
-        <div className="flex items-center gap-1">
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setLayoutDirection((prev) => (prev === "TB" ? "LR" : "TB"))}
+            className="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors font-medium text-[11px] flex items-center gap-1"
+            title="Toggle Top-to-Bottom / Left-to-Right layout"
+          >
+            <span>Layout: {layoutDirection === "TB" ? "Vertical (TB)" : "Horizontal (LR)"}</span>
+          </button>
+
           <button onClick={() => zoomIn()} className="graph-zoom-btn" title="Zoom In">
             <ZoomIn size={14} />
           </button>
           <button onClick={() => zoomOut()} className="graph-zoom-btn" title="Zoom Out">
             <ZoomOut size={14} />
           </button>
-          <button onClick={() => fitView({ padding: 0.2 })} className="graph-zoom-btn" title="Fit View">
+          <button onClick={() => fitView({ padding: 0.25 })} className="graph-zoom-btn" title="Fit View">
             <Maximize2 size={14} />
           </button>
         </div>
