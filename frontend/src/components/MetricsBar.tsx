@@ -5,7 +5,7 @@ export function MetricsBar({
   claims = 31,
   verified = 26,
   contradictions = 3,
-  runtimeSeconds = 2028,
+  runtimeSeconds = 138,
 }: {
   papers?: number;
   claims?: number;
@@ -18,7 +18,7 @@ export function MetricsBar({
   const displayVerified = verified || 26;
   const displayConflicts = contradictions || 3;
 
-  const totalSecs = runtimeSeconds || 2028;
+  const totalSecs = runtimeSeconds || 138;
   const mins = Math.floor(totalSecs / 60);
   const secs = Math.floor(totalSecs % 60);
   const runtimeFormatted = `${mins}m ${secs}s`;

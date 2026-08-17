@@ -96,7 +96,7 @@ const MOCK_STRUCTURE = {
   verifiedCount: 26,
   conflictsCount: 3,
   unverifiedCount: 2,
-  runtimeSeconds: 2028, // 33m 48s
+  runtimeSeconds: 138, // 2m 18s
   overviewIntro:
     "Intermittent fasting (IF) shows overall beneficial effects on several metabolic health markers including insulin sensitivity, weight, lipid profile, and inflammatory markers in adults. However, heterogeneity in study design, duration, and participant characteristics leads to variable outcomes.",
   summaryBullets: [
