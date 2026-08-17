@@ -1,69 +1,103 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Search, ArrowRight } from "lucide-react";
+import { api, type HistoryItem, type ResearchDepth } from "@/lib/api";
+import { ResearchCard } from "@/components/ResearchCard";
+
+const SUGGESTIONS = [
+  "What are the trade-offs of RAG vs fine-tuning for enterprise LLMs?",
+  "Does intermittent fasting improve metabolic health markers?",
+  "How effective are CRISPR-based therapies for sickle cell disease?",
+];
+
+export default function DashboardPage() {
+  const router = useRouter();
+  const [question, setQuestion] = useState("");
+  const [depth, setDepth] = useState<ResearchDepth>("standard");
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [starting, setStarting] = useState(false);
+
+  useEffect(() => {
+    api.getHistory().then((r) => setHistory(r.history)).catch(() => {});
+  }, []);
+
+  async function startResearch(q: string) {
+    if (!q.trim() || starting) return;
+    setStarting(true);
+    try {
+      const { id } = await api.startResearch(q.trim(), depth);
+      router.push(`/research/${id}/run`);
+    } catch {
+      setStarting(false);
+    }
+  }
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="page-container">
+      <section className="hero">
+        <h1>What do you want to research?</h1>
+        <p className="hero-sub">
+          Pramaan AI searches the literature, extracts claims, challenges them with counter-evidence,
+          and verifies every conclusion before reporting.
+        </p>
+
+        <div className="hero-input glass-card">
+          <Search size={18} className="hero-input-icon" />
+          <textarea
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="Ask a research question..."
+            rows={2}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                startResearch(question);
+              }
+            }}
+          />
+          <button
+            className="button-primary"
+            disabled={!question.trim() || starting}
+            onClick={() => startResearch(question)}
           >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            {starting ? "Starting…" : "Start Research"}
+            <ArrowRight size={16} />
+          </button>
         </div>
-      </main>
-    </div>
+
+        <div className="depth-selector">
+          {(["quick", "standard", "deep"] as ResearchDepth[]).map((d) => (
+            <button
+              key={d}
+              className={`depth-pill${depth === d ? " depth-pill-active" : ""}`}
+              onClick={() => setDepth(d)}
+            >
+              {d}
+            </button>
+          ))}
+        </div>
+
+        <div className="suggestions">
+          {SUGGESTIONS.map((s) => (
+            <button key={s} className="suggestion-chip glass-pill" onClick={() => setQuestion(s)}>
+              {s}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {history.length > 0 && (
+        <section className="recent-section">
+          <h2>Recent Research</h2>
+          <div className="research-card-grid">
+            {history.slice(0, 6).map((item) => (
+              <ResearchCard key={item.id} item={item} />
+            ))}
+          </div>
+        </section>
+      )}
+    </main>
   );
 }

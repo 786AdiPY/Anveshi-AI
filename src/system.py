@@ -1,4 +1,5 @@
 import logging
+import os
 from . import config
 from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.memory import MemorySaver
@@ -9,6 +10,10 @@ from .logger import setup_logger
 
 # Use the centralized logger
 logger = setup_logger()
+
+# Ceiling on graph node executions per run — the backstop that stops a wedged
+# run from burning thousands of API calls. See src/api.py for the full note.
+GRAPH_RECURSION_LIMIT = int(os.getenv("GRAPH_RECURSION_LIMIT", "60"))
 
 class MultiAgentSystem:
     def __init__(self):
@@ -28,7 +33,7 @@ class MultiAgentSystem:
         
         events = graph.stream(
             initial_state,
-            {"configurable": {"thread_id": "1"}, "recursion_limit": 3000},
+            {"configurable": {"thread_id": "1"}, "recursion_limit": GRAPH_RECURSION_LIMIT},
             stream_mode="values",
             debug=False
         )

@@ -8,7 +8,7 @@ WORKING_DIRECTORY = ./data/
 CONFIG_DIRECTORY = config
 
 # Conda environment name(required)
-CONDA_ENV = verity-ai
+CONDA_ENV = pramaan-ai
 
 # ChromeDriver executable path(required)
 CHROMEDRIVER_PATH = ./chromedriver-linux64/chromedriver
@@ -46,3 +46,11 @@ LANGCHAIN_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 TAVILY_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # GitHub token for github MCP server
 GITHUB_TOKEN = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+# Supabase (optional) — persists research runs so history survives a restart.
+# Run supabase/schema.sql in the Supabase SQL editor first.
+# If unset, the app falls back to in-memory storage only.
+# Project Settings > API > Project URL
+SUPABASE_URL = https://XXXXXXXXXXXXXXXXXXXX.supabase.co
+# Project Settings > API > service_role key (secret — server-side only, never expose to a browser)
+SUPABASE_SERVICE_ROLE_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

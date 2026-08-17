@@ -8,3 +8,6 @@ chromedriver/
 # Local configurations
 config_local/
 config_*/
+implementation_plan.md
+verity_research_agent_plan(1).md
+verity_ui_plan.md

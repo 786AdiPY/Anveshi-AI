@@ -1,5 +1,5 @@
 """
-Verity — LangGraph Workflow
+Pramaan AI — LangGraph Workflow
 Builds the evidence-grounded research state graph.
 
 Flow:

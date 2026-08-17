@@ -1,5 +1,5 @@
 """
-Verity — Planner Agent
+Pramaan AI — Planner Agent
 Decomposes the research question into subquestions, hypotheses, and search queries.
 """
 from __future__ import annotations

@@ -6,7 +6,7 @@ import asyncio
 import threading
 
 # Suppress USER_AGENT warning
-os.environ["USER_AGENT"] = "Verity-AI/1.0"
+os.environ["USER_AGENT"] = "Pramaan AI/1.0"
 
 # Filter noisy MCP/library output from stderr
 class OutputFilter:
@@ -49,7 +49,7 @@ def run_mcp_loop(loop):
 
 
 def main():
-    """Verity — Evidence-Grounded Research Agent entry point."""
+    """Pramaan AI — Evidence-Grounded Research Agent entry point."""
     # Start background event loop for persistent MCP connections
     mcp_loop = asyncio.new_event_loop()
     mcp_thread = threading.Thread(target=run_mcp_loop, args=(mcp_loop,), daemon=True)
@@ -73,7 +73,7 @@ def main():
             user_input = " ".join(sys.argv[1:])
         else:
             user_input = input(
-                "\n🔬 Verity Research Agent\nEnter your research question "
+                "\n🔬 Pramaan AI Research Agent\nEnter your research question "
                 "(or press Enter for demo): "
             ).strip() or default_query
 

@@ -264,7 +264,15 @@ class BaseAgent(ABC):
         # Add a default timeout to prevent indefinite hanging
         if "timeout" not in config:
             config["timeout"] = 60
-            
+
+        # Cap the completion size. Left unset, the client asks for the model's
+        # full ceiling (16k+ on gpt-4o-mini), which providers bill/authorize
+        # against up front — enough to get a request rejected outright on a
+        # low balance. These agents emit short structured JSON, so a small cap
+        # costs nothing in quality. Override per agent in agent_models.yaml.
+        if "max_tokens" not in config:
+            config["max_tokens"] = 4096
+
         return model_class(**config)
 
     def invoke(self, state: Any) -> Any:

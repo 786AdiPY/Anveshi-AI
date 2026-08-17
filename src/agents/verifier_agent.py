@@ -1,5 +1,5 @@
 """
-Verity — Verifier Agent
+Pramaan AI — Verifier Agent
 Rigorously validates every claim against source evidence.
 Outputs PASS / FAIL / UNCERTAIN per claim and gates progression to the Synthesizer.
 """

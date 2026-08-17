@@ -1,5 +1,5 @@
 """
-Verity — LangGraph Router
+Pramaan AI — LangGraph Router
 Routing logic for the evidence-grounded research workflow.
 """
 from __future__ import annotations
@@ -10,6 +10,10 @@ import logging
 from .state import State
 
 logger = logging.getLogger(__name__)
+
+# How many back-to-back agent failures before the run is abandoned. Failures
+# that persist this long are configuration or provider problems, not transients.
+MAX_CONSECUTIVE_ERRORS = 3
 
 
 def get_state_attr(state: State | dict[str, Any], key: str, default: Any = None) -> Any:
@@ -43,6 +47,16 @@ def supervisor_router(state: State) -> SupervisorTarget:
     logger.info("supervisor_router")
     next_step = get_state_attr(state, "next_workflow_step", "Literature")
     step_count = get_state_attr(state, "step_count", 0)
+    consecutive_errors = get_state_attr(state, "consecutive_errors", 0)
+
+    # Bail out when the agents keep failing (bad API key, no credits, provider
+    # down). Retrying cannot recover from these, so stop rather than spin.
+    if consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
+        logger.error(
+            f"{consecutive_errors} consecutive agent failures — terminating via Synthesizer. "
+            f"Last error: {get_state_attr(state, 'last_error', 'unknown')}"
+        )
+        return "Synthesizer"
 
     # Safety cap
     if step_count > 30:
@@ -57,7 +71,15 @@ def supervisor_router(state: State) -> SupervisorTarget:
         "FINISH": "Synthesizer",
     }
 
-    result = mapping.get(next_step, "Supervisor")
+    # An unrecognized step means the Supervisor produced no usable directive.
+    # Fall through to Literature to make progress; routing back to Supervisor
+    # here would loop forever whenever the Supervisor cannot answer.
+    result = mapping.get(next_step)
+    if result is None:
+        logger.warning(
+            f"Unrecognized next_workflow_step {next_step!r} — defaulting to Literature."
+        )
+        result = "Literature"
     logger.info(f"supervisor_router → {result}")
     return result
 

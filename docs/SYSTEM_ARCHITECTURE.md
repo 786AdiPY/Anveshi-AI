@@ -1,6 +1,6 @@
 # System Architecture Overview
 
-This document provides a high-level overview of the Verity-AI system architecture.
+This document provides a high-level overview of the Pramaan AI system architecture.
 
 ## Documentation Index
 
@@ -18,7 +18,7 @@ This document provides a high-level overview of the Verity-AI system architectur
 
 ### Progressive Disclosure
 
-Verity-AI uses a three-level loading strategy to optimize Context Window usage:
+Pramaan AI uses a three-level loading strategy to optimize Context Window usage:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐

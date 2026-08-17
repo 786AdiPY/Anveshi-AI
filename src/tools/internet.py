@@ -65,7 +65,7 @@ def _scrape_webpages(urls: Annotated[List[str], "List of URLs to scrape"]) -> An
         logger.info(f"Scraping webpages: {urls}")
         loader = WebBaseLoader(urls)
         docs = loader.load()
-        content = "\n\n".join([f'\n{doc.page_content}\n' for doc in docs])
+        content = "\n\n".join([f'\n{doc.page_content[:3000]}\n' for doc in docs])[:12000]
         logger.info("Webpage scraping completed successfully")
         return content
     except Exception as e:

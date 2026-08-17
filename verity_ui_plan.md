@@ -1,4 +1,4 @@
-# Verity — UI Execution Plan
+# Pramaan AI — UI Execution Plan
 
 ## Page 1 — Main Dashboard `/`
 
@@ -7,7 +7,7 @@
 ### Contents
 
 **Left sidebar**
-- Verity logo
+- Pramaan AI logo
 - New Research
 - Research History
 - Saved Reports

@@ -1,13 +1,13 @@
-# Verity-AI (原 AI-Data-Analysis-MultiAgent)
+# Pramaan AI (原 AI-Data-Analysis-MultiAgent)
 
-## 關於 Verity-AI
-Verity-AI 是一個強大的平台，通過多代理系統進行自動化數據分析和研究。
+## 關於 Pramaan AI
+Pramaan AI 是一個強大的平台，通過多代理系統進行自動化數據分析和研究。
 
 ![系統架構](../../docs/Architecture.png)
 
 ## 概述
 
-Verity-AI 是一個先進的 AI 驅動數據分析和研究平台，利用多個專業代理來簡化數據分析、可視化和報告生成等任務。我們的平台運用尖端技術，包括 LangChain、OpenAI 的 GPT 模型和 LangGraph，來處理複雜的研究流程，整合多樣化的 AI 架構以實現最佳性能。
+Pramaan AI 是一個先進的 AI 驅動數據分析和研究平台，利用多個專業代理來簡化數據分析、可視化和報告生成等任務。我們的平台運用尖端技術，包括 LangChain、OpenAI 的 GPT 模型和 LangGraph，來處理複雜的研究流程，整合多樣化的 AI 架構以實現最佳性能。
 
 ## 主要功能
 
@@ -39,9 +39,9 @@ Verity-AI 是一個先進的 AI 驅動數據分析和研究平台，利用多個
   - 自動化資源優化
   - 即時性能監控
 
-## 為何選擇 Verity-AI
+## 為何選擇 Pramaan AI
 
-Verity-AI 通過創新的多代理架構和智能自動化功能徹底革新數據分析：
+Pramaan AI 通過創新的多代理架構和智能自動化功能徹底革新數據分析：
 
 1. **進階多代理系統**
    - 專業代理協調運作
@@ -66,13 +66,13 @@ Verity-AI 通過創新的多代理架構和智能自動化功能徹底革新數�
 
 1. 克隆儲存庫：
 ```bash
-git clone https://github.com/786AdiPY/Verity.git
+git clone https://github.com/786AdiPY/Pramaan-AI.git
 ```
 
 2. 建立並啟用 Conda 虛擬環境：
 ```bash
-conda create -n verity-ai python=3.10
-conda activate verity-ai
+conda create -n pramaan-ai python=3.10
+conda activate pramaan-ai
 ```
 
 3. 安裝依賴套件：
@@ -94,7 +94,7 @@ WORKING_DIRECTORY = ./data/
 CONFIG_DIRECTORY = config
 
 # Conda 環境名稱（必需）
-CONDA_ENV = verity-ai
+CONDA_ENV = pramaan-ai
 
 # ChromeDriver 執行檔路徑（必需）
 CHROMEDRIVER_PATH = ./chromedriver-linux64/chromedriver
@@ -197,7 +197,7 @@ agents:
 
 ## 進階設定系統
 
-Verity-AI 實現了強大的**漸進式揭露**架構用於代理配置，靈感來自 [Claude Agent Skills](https://platform.claude.com/docs/agents-and-tools/agent-skills/overview)。
+Pramaan AI 實現了強大的**漸進式揭露**架構用於代理配置，靈感來自 [Claude Agent Skills](https://platform.claude.com/docs/agents-and-tools/agent-skills/overview)。
 
 ### 文檔
 

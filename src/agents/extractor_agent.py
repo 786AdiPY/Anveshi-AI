@@ -1,5 +1,5 @@
 """
-Verity — Evidence Extractor Agent
+Pramaan AI — Evidence Extractor Agent
 Extracts granular claims and structured evidence from retrieved literature.
 """
 from __future__ import annotations

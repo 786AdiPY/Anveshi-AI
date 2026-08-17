@@ -1,5 +1,5 @@
 """
-Verity — Evidence-Grounded Research Agent
+Pramaan AI — Evidence-Grounded Research Agent
 Core data schemas for structured research entities.
 """
 from __future__ import annotations

@@ -1,14 +1,14 @@
-# Pramaan-AI: Multi-Agent Framework for Research
+# Pramaan AI
 
 **Author:** [786AdiPY](https://github.com/786AdiPY)
 
-## About Verity-AI
-Verity-AI is a powerful platform designed for automated data analysis and research through a multi-agent system.
+## About Pramaan AI
+Pramaan AI is a powerful platform designed for automated data analysis and research through a multi-agent system.
 
 ![System Architecture](./docs/Architecture.png)
 ## Overview
 
-Verity-AI is an advanced AI-powered data analysis and research platform that utilizes multiple specialized agents to streamline tasks such as data analysis, visualization, and report generation. Our platform leverages cutting-edge technologies including LangChain, OpenAI's GPT models, and LangGraph to handle complex research processes, integrating diverse AI architectures for optimal performance.
+Pramaan AI is an advanced AI-powered data analysis and research platform that utilizes multiple specialized agents to streamline tasks such as data analysis, visualization, and report generation. Our platform leverages cutting-edge technologies including LangChain, OpenAI's GPT models, and LangGraph to handle complex research processes, integrating diverse AI architectures for optimal performance.
 
 ## Key Features
 
@@ -40,9 +40,9 @@ Verity-AI is an advanced AI-powered data analysis and research platform that uti
   - Automated resource optimization
   - Real-time performance monitoring
 
-## Why Verity-AI Stands Out
+## Why Pramaan AI Stands Out
 
-Verity-AI revolutionizes data analysis through its innovative multi-agent architecture and intelligent automation capabilities:
+Pramaan AI revolutionizes data analysis through its innovative multi-agent architecture and intelligent automation capabilities:
 
 1. **Advanced Multi-Agent System**
    - Specialized agents working in harmony
@@ -67,12 +67,12 @@ Verity-AI revolutionizes data analysis through its innovative multi-agent archit
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/786AdiPY/Verity.git
+git clone https://github.com/786AdiPY/Pramaan-AI.git
 ```
 2. Create and activate a Conda virtual environment:
 ```bash
-conda create -n verity-ai python=3.10
-conda activate verity-ai
+conda create -n pramaan-ai python=3.10
+conda activate pramaan-ai
 ```
 3. Install dependencies:
 ```bash
@@ -92,7 +92,7 @@ WORKING_DIRECTORY = ./data/
 CONFIG_DIRECTORY = config
 
 # Conda environment name (required)
-CONDA_ENV = verity-ai
+CONDA_ENV = pramaan-ai
 
 # ChromeDriver executable path (required)
 CHROMEDRIVER_PATH = ./chromedriver-linux64/chromedriver
@@ -201,7 +201,7 @@ agents:
 
 ## Advanced Configuration System
 
-Verity-AI implements a powerful **Progressive Disclosure** architecture for agent configuration, inspired by [Claude Agent Skills](https://platform.claude.com/docs/agents-and-tools/agent-skills/overview).
+Pramaan AI implements a powerful **Progressive Disclosure** architecture for agent configuration, inspired by [Claude Agent Skills](https://platform.claude.com/docs/agents-and-tools/agent-skills/overview).
 
 ### Documentation
 
@@ -226,7 +226,7 @@ Verity-AI implements a powerful **Progressive Disclosure** architecture for agen
 - Ensure you have sufficient API credits, as the system will make multiple API calls.
 - The system may take some time to complete the entire research process, depending on the complexity of the task.
 - **WARNING**: The agent system may modify the data being analyzed. It is highly recommended to backup your data before using this system.
-- Verity-AI does not ship or train on project-provided training datasets. Users provide their own analysis data at runtime through `WORKING_DIRECTORY`.
+- Pramaan AI does not ship or train on project-provided training datasets. Users provide their own analysis data at runtime through `WORKING_DIRECTORY`.
 
 ## Current Issues and Solutions
 1. NoteTaker Efficiency Improvement
@@ -242,7 +242,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Star History
 
-[![Star History Chart](https://star-history.dera.page/svg?repos=786AdiPY/Verity&type=Date)](https://star-history.dera.page/#786AdiPY/Verity&type=Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=786AdiPY/Pramaan-AI&type=Date)](https://star-history.dera.page/#786AdiPY/Pramaan-AI&type=Date)
 
 ## Other Projects
 Here are some of my other notable projects:

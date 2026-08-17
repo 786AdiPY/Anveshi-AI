@@ -1,5 +1,5 @@
 """
-Verity — LangGraph Node Handlers
+Pramaan AI — LangGraph Node Handlers
 Wraps agent invocations and provides the optional plan-review human node.
 """
 from __future__ import annotations
@@ -8,6 +8,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 import json
 import re
 import logging
+import sys
 import time
 
 from .state import State
@@ -95,11 +96,11 @@ def get_structured_output(result: Any, agent: "BaseAgent") -> Any:
 
 
 # ---------------------------------------------------------------------------
-# Generic agent node — used for ALL Verity agents
+# Generic agent node — used for ALL Pramaan AI agents
 # ---------------------------------------------------------------------------
 
 def agent_node(state: "State", agent: "BaseAgent", name: str) -> dict[str, Any]:
-    """Invoke a Verity agent and merge its state updates."""
+    """Invoke a Pramaan AI agent and merge its state updates."""
     logger.info(f"Processing agent: {name}")
     try:
         result = agent.invoke(state)
@@ -133,17 +134,27 @@ def agent_node(state: "State", agent: "BaseAgent", name: str) -> dict[str, Any]:
 
         current_step = get_state_attr(state, "step_count", 0)
         updates["step_count"] = current_step + 1
+        # A successful invocation clears the failure streak.
+        updates["consecutive_errors"] = 0
+        updates["last_error"] = None
 
         return updates
 
     except Exception as e:
         logger.error(f"Error in {name}: {e}", exc_info=True)
         current_messages = list(get_state_attr(state, "messages", []))
+        # Advance step_count and the failure streak here too. Without this the
+        # router's safety caps never trip, so a persistently failing agent (an
+        # unreachable or out-of-credit model, say) spins until the graph's
+        # recursion limit instead of stopping.
         return {
             "messages": current_messages + [
                 AIMessage(content=f"Error in {name}: {e}", name=name)
             ],
             "last_active_agent": name,
+            "step_count": get_state_attr(state, "step_count", 0) + 1,
+            "consecutive_errors": get_state_attr(state, "consecutive_errors", 0) + 1,
+            "last_error": f"{name}: {e}",
         }
 
 
@@ -155,13 +166,22 @@ def human_plan_review_node(state: "State") -> dict[str, Any]:
     """
     Show the Planner's research plan to the user and let them
     confirm or edit before the Supervisor starts dispatching agents.
+
+    This graph is shared by the interactive CLI (main.py) and the API server
+    (src/api.py, run in a background thread with no stdin). input() there
+    raises EOFError immediately, failing every run right after Planner — so
+    outside a real terminal this auto-continues instead of prompting.
     """
     rq = state.research_question
     if not rq:
         return {"current_instruction": "Continue the research process"}
 
+    if not sys.stdin.isatty():
+        logger.info("Non-interactive session — auto-continuing with the plan as-is.")
+        return {"current_instruction": "Continue the research process"}
+
     print("\n" + "=" * 60)
-    print("VERITY — RESEARCH PLAN REVIEW")
+    print("PRAMAAN AI — RESEARCH PLAN REVIEW")
     print("=" * 60)
     print(f"\nResearch Question:\n  {rq.query}")
     print("\nSubquestions:")

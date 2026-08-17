@@ -1,5 +1,5 @@
 """
-Verity — FastAPI Server & Real-time SSE Endpoint
+Pramaan AI — FastAPI Server & Real-time SSE Endpoint
 Exposes research execution, state streaming, evidence graph, and settings to the frontend.
 """
 from __future__ import annotations
@@ -18,12 +18,13 @@ from src.system import MultiAgentSystem
 from src.core.schemas import ResearchDepth, VerificationStatus
 from src.core.state import create_initial_state
 from src.core.mcp_manager import get_mcp_manager
+from src.core.supabase_client import get_supabase, RESEARCH_RUNS_TABLE
 from src.logger import setup_logger
 
 logger = setup_logger()
 
 app = FastAPI(
-    title="Verity API",
+    title="Pramaan AI API",
     description="Evidence-Grounded Multi-Agent Research Engine API",
     version="1.0.0",
 )
@@ -38,6 +39,72 @@ app.add_middleware(
 
 # In-memory store for active and historical research runs
 RESEARCH_RUNS: Dict[str, Dict[str, Any]] = {}
+
+# Hard ceiling on graph node executions per run. A full pass is roughly
+# Planner → Supervisor → sub-agent → Ledger → Verifier, repeated up to
+# max_verification_loops, then Synthesizer → EvidenceGraph — well under 40.
+# This is the backstop that turns a stuck run into a fast failure instead of
+# thousands of billed API calls.
+GRAPH_RECURSION_LIMIT = int(os.getenv("GRAPH_RECURSION_LIMIT", "60"))
+
+
+def persist_run(run_entry: Dict[str, Any]) -> None:
+    """
+    Best-effort write-through to Supabase. In-memory RESEARCH_RUNS stays the
+    source of truth for a live run (the SSE stream polls it directly, with no
+    DB round trip); this just mirrors it so history survives a restart.
+    Never raises — a persistence hiccup shouldn't fail a research run.
+    """
+    supabase = get_supabase()
+    if not supabase:
+        return
+    try:
+        supabase.table(RESEARCH_RUNS_TABLE).upsert({
+            "id": run_entry["id"],
+            "question": run_entry["question"],
+            "depth": run_entry["depth"],
+            "status": run_entry["status"],
+            "created_at": run_entry["created_at"],
+            "started_at": run_entry.get("started_at"),
+            "completed_at": run_entry.get("completed_at"),
+            "error": run_entry.get("error"),
+            "events": run_entry.get("events", []),
+            "latest_state": run_entry.get("latest_state", {}),
+        }).execute()
+    except Exception as e:
+        logger.warning(f"Supabase persist failed for run {run_entry.get('id')}: {e}")
+
+
+def fetch_persisted_run(run_id: str) -> Optional[Dict[str, Any]]:
+    """Look up a single run in Supabase (used when it's not in memory, e.g. after a restart)."""
+    supabase = get_supabase()
+    if not supabase:
+        return None
+    try:
+        res = supabase.table(RESEARCH_RUNS_TABLE).select("*").eq("id", run_id).limit(1).execute()
+        return res.data[0] if res.data else None
+    except Exception as e:
+        logger.warning(f"Supabase fetch failed for run {run_id}: {e}")
+        return None
+
+
+def fetch_persisted_history(exclude_ids: set[str]) -> list[Dict[str, Any]]:
+    """Historical runs from Supabase not already held in memory (e.g. from before a restart)."""
+    supabase = get_supabase()
+    if not supabase:
+        return []
+    try:
+        res = (
+            supabase.table(RESEARCH_RUNS_TABLE)
+            .select("id,question,depth,status,created_at,latest_state")
+            .order("created_at", desc=True)
+            .limit(200)
+            .execute()
+        )
+        return [r for r in res.data if r["id"] not in exclude_ids]
+    except Exception as e:
+        logger.warning(f"Supabase history fetch failed: {e}")
+        return []
 
 
 class StartResearchRequest(BaseModel):
@@ -64,6 +131,7 @@ def run_research_background(run_id: str, question: str):
     run_entry = RESEARCH_RUNS[run_id]
     run_entry["status"] = "running"
     run_entry["started_at"] = datetime.utcnow().isoformat()
+    persist_run(run_entry)
 
     try:
         system = MultiAgentSystem()
@@ -72,7 +140,7 @@ def run_research_background(run_id: str, question: str):
 
         events = graph.stream(
             initial_state,
-            {"configurable": {"thread_id": run_id}, "recursion_limit": 3000},
+            {"configurable": {"thread_id": run_id}, "recursion_limit": GRAPH_RECURSION_LIMIT},
             stream_mode="values",
             debug=False,
         )
@@ -104,7 +172,14 @@ def run_research_background(run_id: str, question: str):
                 "verified_count": verified_count,
                 "contradictions_count": len(contradictions),
                 "status": "running" if not brief else "completed",
+                "error": event.get("last_error"),
             }
+
+            # Agents swallow their own exceptions so the graph can recover, so a
+            # failing run still looks "running" here. Surface the latest failure
+            # on the run entry to keep it visible in the UI.
+            if event.get("last_error"):
+                run_entry["error"] = event.get("last_error")
 
             run_entry["events"].append(event_payload)
             run_entry["latest_state"] = {
@@ -116,14 +191,17 @@ def run_research_background(run_id: str, question: str):
                 "research_brief": brief,
                 "evidence_graph_data": graph_data,
             }
+            persist_run(run_entry)
 
         run_entry["status"] = "completed"
         run_entry["completed_at"] = datetime.utcnow().isoformat()
+        persist_run(run_entry)
 
     except Exception as e:
         logger.error(f"Error executing research run {run_id}: {e}", exc_info=True)
         run_entry["status"] = "failed"
         run_entry["error"] = str(e)
+        persist_run(run_entry)
 
 
 @app.post("/api/research")
@@ -141,6 +219,7 @@ async def start_research(payload: StartResearchRequest):
         "error": None,
     }
     RESEARCH_RUNS[run_id] = run_entry
+    persist_run(run_entry)
 
     # Start background execution
     asyncio.get_event_loop().run_in_executor(None, run_research_background, run_id, payload.question)
@@ -150,7 +229,7 @@ async def start_research(payload: StartResearchRequest):
 
 @app.get("/api/research/history")
 async def get_history():
-    """Get list of past and active research runs."""
+    """Get list of past and active research runs (in-memory + Supabase, deduplicated)."""
     history = []
     for r in RESEARCH_RUNS.values():
         state = r.get("latest_state", {})
@@ -164,15 +243,33 @@ async def get_history():
             "claims_count": len(state.get("claims", [])),
             "has_report": bool(state.get("research_brief")),
         })
+
+    for r in fetch_persisted_history(exclude_ids=set(RESEARCH_RUNS.keys())):
+        state = r.get("latest_state") or {}
+        history.append({
+            "id": r["id"],
+            "question": r["question"],
+            "status": r["status"],
+            "depth": r["depth"],
+            "created_at": r["created_at"],
+            "papers_count": len(state.get("papers", [])),
+            "claims_count": len(state.get("claims", [])),
+            "has_report": bool(state.get("research_brief")),
+        })
+
+    history.sort(key=lambda h: h["created_at"], reverse=True)
     return {"history": history}
 
 
 @app.get("/api/research/{run_id}")
 async def get_research_detail(run_id: str):
     """Get research run details and full state."""
-    if run_id not in RESEARCH_RUNS:
-        raise HTTPException(status_code=404, detail="Research run not found")
-    return RESEARCH_RUNS[run_id]
+    if run_id in RESEARCH_RUNS:
+        return RESEARCH_RUNS[run_id]
+    persisted = fetch_persisted_run(run_id)
+    if persisted:
+        return persisted
+    raise HTTPException(status_code=404, detail="Research run not found")
 
 
 @app.get("/api/research/{run_id}/stream")
@@ -213,22 +310,22 @@ async def stream_research_events(run_id: str):
 @app.get("/api/research/{run_id}/graph")
 async def get_evidence_graph(run_id: str):
     """Get JSON evidence graph data for the interactive graph UI."""
-    if run_id not in RESEARCH_RUNS:
+    run_entry = RESEARCH_RUNS.get(run_id) or fetch_persisted_run(run_id)
+    if not run_entry:
         raise HTTPException(status_code=404, detail="Research run not found")
 
-    run_entry = RESEARCH_RUNS[run_id]
-    graph_data = run_entry.get("latest_state", {}).get("evidence_graph_data", {"nodes": [], "edges": []})
+    graph_data = (run_entry.get("latest_state") or {}).get("evidence_graph_data", {"nodes": [], "edges": []})
     return graph_data
 
 
 @app.get("/api/research/{run_id}/agents/{agent_name}")
 async def get_agent_inspector_data(run_id: str, agent_name: str):
     """Get inspection data for a specific agent node."""
-    if run_id not in RESEARCH_RUNS:
+    run_entry = RESEARCH_RUNS.get(run_id) or fetch_persisted_run(run_id)
+    if not run_entry:
         raise HTTPException(status_code=404, detail="Research run not found")
 
-    run_entry = RESEARCH_RUNS[run_id]
-    state = run_entry.get("latest_state", {})
+    state = run_entry.get("latest_state") or {}
 
     agent_events = [
         ev for ev in run_entry.get("events", []) if ev.get("agent") == agent_name

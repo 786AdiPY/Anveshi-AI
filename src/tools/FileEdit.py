@@ -56,8 +56,8 @@ def collect_data(
             return data
         except Exception as e:
             logger.warning(f"Error with encoding {encoding}: {e}")
-    logger.error("Unable to read file with provided encodings")
-    raise ValueError("Unable to read file with provided encodings")
+    logger.error(f"Unable to read file with provided encodings: {data_path}")
+    return f"Error: Unable to read CSV file at '{data_path}'. Please verify the file path exists and is a valid CSV."
 
 @tool
 def create_document(

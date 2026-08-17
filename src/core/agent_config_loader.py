@@ -139,6 +139,16 @@ class AgentConfigLoader:
         self._metadata_cache: Dict[str, AgentMetadata] = {}
         self._mcp_config: Optional[Dict[str, Any]] = None
 
+    def _resolve_agent_dir(self, agent_name: str) -> Path:
+        p = self.config_root / agent_name
+        if p.exists():
+            return p
+        short = agent_name.replace("_agent", "")
+        p_short = self.config_root / short
+        if p_short.exists():
+            return p_short
+        return p
+
     def discover_agents(self) -> List[str]:
         """Discover all available agents (Level 1).
 
@@ -178,7 +188,8 @@ class AgentConfigLoader:
         if agent_name in self._metadata_cache:
             return self._metadata_cache[agent_name]
 
-        agent_md_path = self.config_root / agent_name / "AGENT.md"
+        agent_dir = self._resolve_agent_dir(agent_name)
+        agent_md_path = agent_dir / "AGENT.md"
         if not agent_md_path.exists():
             raise FileNotFoundError(f"Agent config not found: {agent_md_path}")
 
@@ -221,7 +232,8 @@ class AgentConfigLoader:
         Raises:
             FileNotFoundError: If AGENT.md does not exist.
         """
-        agent_md_path = self.config_root / agent_name / "AGENT.md"
+        agent_dir = self._resolve_agent_dir(agent_name)
+        agent_md_path = agent_dir / "AGENT.md"
         if not agent_md_path.exists():
             raise FileNotFoundError(f"Agent config not found: {agent_md_path}")
 
@@ -549,7 +561,7 @@ class AgentConfigLoader:
         Returns:
             Agent configuration dictionary.
         """
-        config_path = self.config_root / agent_name / "config.yaml"
+        config_path = self._resolve_agent_dir(agent_name) / "config.yaml"
         if not config_path.exists():
             logger.debug(f"No config.yaml for agent: {agent_name}")
             return {"skills": [], "tools": [], "rules": [], "mcp_servers": []}

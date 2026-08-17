@@ -18,7 +18,7 @@ from .schemas import (
 
 class State(BaseModel):
     """
-    Canonical shared state for the Verity multi-agent research workflow.
+    Canonical shared state for the Pramaan AI multi-agent research workflow.
     Stores both the LangGraph message log and all structured research artifacts.
     """
 
@@ -40,6 +40,14 @@ class State(BaseModel):
     step_count: int = Field(
         default=0,
         description="Safety counter to prevent infinite loops"
+    )
+    consecutive_errors: int = Field(
+        default=0,
+        description="Agent invocations that raised in a row; reset on any success"
+    )
+    last_error: str | None = Field(
+        default=None,
+        description="Message from the most recent agent failure, surfaced to the UI"
     )
 
     # === Workflow Control ===
@@ -119,6 +127,8 @@ def create_initial_state(user_input: str) -> dict[str, Any]:
         "messages": [HumanMessage(content=user_input)],
         "last_active_agent": "user",
         "step_count": 0,
+        "consecutive_errors": 0,
+        "last_error": None,
         "verification_loop_count": 0,
         "max_verification_loops": 3,
         "needs_more_research": False,
