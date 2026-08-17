@@ -8,7 +8,7 @@ export default function SavedReportsPage() {
       title="Saved Reports"
       emptyText="No completed reports yet — finished research runs show up here."
       offlineText="API not reachable — start the backend to browse saved reports."
-      linkFor={(item) => `/research/${item.id}`}
+      linkFor={(item) => `/research/${item.id}/run`}
     />
   );
 }

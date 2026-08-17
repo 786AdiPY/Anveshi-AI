@@ -10,9 +10,9 @@ const statusColor: Record<string, string> = {
 };
 
 export function ResearchCard({ item }: { item: HistoryItem }) {
-  const href = item.status === "completed" && item.has_report
-    ? `/research/${item.id}`
-    : `/research/${item.id}/run`;
+  // Always navigate to the pipeline process run page first (/research/[id]/run).
+  // From there, the user can click "View full report" to open the detailed brief (/research/[id]).
+  const href = `/research/${item.id}/run`;
 
   return (
     <Link href={href} className="research-card glass-card">

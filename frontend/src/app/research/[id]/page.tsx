@@ -110,8 +110,8 @@ export default function ReportPage() {
 
   return (
     <main className="page-container report-page">
-      <Link href="/runs" className="back-link">
-        <ArrowLeft size={15} /> Back to results
+      <Link href={`/research/${id}/run`} className="back-link">
+        <ArrowLeft size={15} /> Back to process view
       </Link>
 
       <header className="report-header glass-card">
