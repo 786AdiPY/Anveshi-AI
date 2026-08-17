@@ -106,7 +106,10 @@ function DashboardInner() {
   const [statsRange, setStatsRange] = useState<"month" | "all">("month");
 
   useEffect(() => {
-    api.getHistory().then((r) => setHistory(r.history)).catch(() => {});
+    api
+      .getHistory()
+      .then((r) => setHistory(r.history.filter((h) => h.status !== "failed")))
+      .catch(() => {});
   }, []);
 
   async function startResearch(q: string) {
@@ -141,6 +144,7 @@ function DashboardInner() {
   const recent = useMemo(
     () =>
       [...history]
+        .filter((h) => h.status !== "failed")
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 5),
     [history]

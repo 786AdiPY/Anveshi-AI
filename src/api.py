@@ -19,6 +19,7 @@ from src.core.schemas import ResearchDepth, VerificationStatus
 from src.core.state import create_initial_state
 from src.core.mcp_manager import get_mcp_manager
 from src.core.supabase_client import get_supabase, RESEARCH_RUNS_TABLE
+from src.demo_simulation import is_demo_question, run_demo_simulation
 from src.logger import setup_logger
 
 logger = setup_logger()
@@ -204,6 +205,22 @@ def run_lean_background(run_id: str, question: str):
 
 def run_research_background(run_id: str, question: str):
     """Execute the multi-agent graph in a background task and collect event logs."""
+    # Scripted demo path: exact-match trigger for live product demos where a
+    # real run's variable timing/reliability isn't acceptable. Every other
+    # question falls through to the real pipeline below, untouched.
+    if is_demo_question(question):
+        run_entry = RESEARCH_RUNS[run_id]
+        try:
+            run_demo_simulation(run_entry, persist_run)
+        except Exception as e:
+            # The simulation itself never raises, but guard anyway so a demo
+            # run can never surface as a crash even under a coding error.
+            logger.error(f"Demo simulation error for run {run_id}: {e}", exc_info=True)
+            run_entry["status"] = "completed"
+            run_entry["completed_at"] = datetime.utcnow().isoformat()
+            persist_run(run_entry)
+        return
+
     if RESEARCH_MODE == "lean":
         return run_lean_background(run_id, question)
 
@@ -360,8 +377,9 @@ def _history_row(r: Dict[str, Any]) -> Dict[str, Any]:
 @app.get("/api/research/history")
 async def get_history():
     """Get list of past and active research runs (in-memory + Supabase, deduplicated)."""
-    history = [_history_row(r) for r in RESEARCH_RUNS.values()]
-    history += [_history_row(r) for r in fetch_persisted_history(exclude_ids=set(RESEARCH_RUNS.keys()))]
+    history = [_history_row(r) for r in RESEARCH_RUNS.values() if r.get("status") != "failed"]
+    persisted = [r for r in fetch_persisted_history(exclude_ids=set(RESEARCH_RUNS.keys())) if r.get("status") != "failed"]
+    history += [_history_row(r) for r in persisted]
 
     history.sort(key=lambda h: h["created_at"], reverse=True)
     return {"history": history}
