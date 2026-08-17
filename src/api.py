@@ -325,6 +325,8 @@ async def get_history():
 
     for item in raw_history:
         q_norm = item["question"].strip().lower()
+        if q_norm in ["helooo", "hello", "test", "testing", "asdf", "hi"]:
+            continue
         if item["id"] not in seen_ids and q_norm not in seen_questions:
             seen_ids.add(item["id"])
             seen_questions.add(q_norm)
