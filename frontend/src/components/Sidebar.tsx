@@ -41,11 +41,18 @@ export function Sidebar() {
   const activeTab = params.get("tab") || "general";
 
   const [collapsed, setCollapsed] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(onSettings);
 
   useEffect(() => {
     const stored = localStorage.getItem("anveshi_sidebar_collapsed");
     if (stored === "true") setCollapsed(true);
   }, []);
+
+  useEffect(() => {
+    if (onSettings) {
+      setSettingsOpen(true);
+    }
+  }, [onSettings]);
 
   const toggleSidebar = () => {
     setCollapsed((prev) => {
@@ -53,6 +60,15 @@ export function Sidebar() {
       localStorage.setItem("anveshi_sidebar_collapsed", String(next));
       return next;
     });
+  };
+
+  const handleSettingsClick = (e: React.MouseEvent) => {
+    if (onSettings) {
+      e.preventDefault();
+      setSettingsOpen((prev) => !prev);
+    } else {
+      setSettingsOpen(true);
+    }
   };
 
   return (
@@ -131,6 +147,7 @@ export function Sidebar() {
 
         <Link
           href="/settings"
+          onClick={handleSettingsClick}
           className={`sidebar-link${onSettings ? " sidebar-link--active" : ""}`}
           title={collapsed ? "Settings" : undefined}
         >
@@ -138,7 +155,7 @@ export function Sidebar() {
           {!collapsed && <span>Settings</span>}
         </Link>
 
-        {!collapsed && onSettings && (
+        {!collapsed && onSettings && settingsOpen && (
           <div className="sidebar-subnav">
             {settingsTabs.map(({ tab, label, icon: Icon }) => (
               <Link

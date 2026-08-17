@@ -214,7 +214,7 @@ function SettingsInner() {
         )}
 
         {tab !== "about" && (
-          <>
+          <div className="settings-actions">
             {saveError && (
               <div className="notice-banner notice-banner-error">
                 <AlertCircle size={15} />
@@ -224,7 +224,7 @@ function SettingsInner() {
             <button className="button-primary config-start-button" onClick={save}>
               <Save size={15} /> {saved ? "Saved" : "Save Settings"}
             </button>
-          </>
+          </div>
         )}
       </section>
     </main>
