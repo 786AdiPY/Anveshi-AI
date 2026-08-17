@@ -367,16 +367,10 @@ export default function LiveRunPage() {
         </div>
       )}
 
-      {/* Main Question & Edit Button */}
+      {/* Main Question */}
       {question && (
         <div className="run-question">
           <h1>{question}</h1>
-          <Link
-            href={`/?q=${encodeURIComponent(question)}&depth=${depth}`}
-            className="button-secondary"
-          >
-            <Pencil size={13} /> Edit &amp; start new run
-          </Link>
         </div>
       )}
 
