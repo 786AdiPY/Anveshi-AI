@@ -13,9 +13,9 @@ pandas==2.3.3
 python-dotenv==1.1.1
 selenium==4.37.0
 wikipedia==1.4.0
-firecrawl-py==4.5.0
-langchain-crw
-openai==2.6.0
+tavily-python>=0.5.0
+duckduckgo-search>=6.0.0
+openai>=2.0.0
 mcp>=1.0.0
 fastapi>=0.115.0
 uvicorn[standard]>=0.30.0

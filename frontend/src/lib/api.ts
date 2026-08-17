@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 export type ResearchDepth = "quick" | "standard" | "deep";
 export type VerificationStatus = "PASS" | "FAIL" | "UNCERTAIN" | "PENDING";
