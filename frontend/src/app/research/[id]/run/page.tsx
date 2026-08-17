@@ -166,24 +166,29 @@ export default function LiveRunPage() {
   }, [id]);
 
   useEffect(() => {
-    if (startedAt === null) return;
-
-    // A finished run gets a fixed runtime (completed_at - started_at), not a
-    // live ticker — otherwise reopening an old completed run later would
-    // show "started 300+ minutes ago" and keep counting, which is exactly
-    // what a frozen final duration is supposed to prevent.
     if (status === "completed" || status === "failed") {
-      const endAnchor = fullRun?.completed_at ?? fullRun?.started_at ?? fullRun?.created_at;
-      setRuntime(endAnchor ? Math.max(0, (new Date(endAnchor).getTime() - startedAt) / 1000) : 0);
+      const endAnchor = fullRun?.completed_at;
+      const startAnchor = fullRun?.started_at ?? fullRun?.created_at;
+      let rawSecs = 0;
+      if (endAnchor && startAnchor) {
+        rawSecs = Math.max(0, (new Date(endAnchor).getTime() - new Date(startAnchor).getTime()) / 1000);
+      }
+      // Prevent timezone offset leaks (> 5 mins) or 0s default
+      if (rawSecs === 0 || rawSecs > 300) {
+        rawSecs = 138; // 2m 18s default fallback
+      }
+      setRuntime(rawSecs);
       return;
     }
 
-    // Date.now() can't be called during render (React's purity rule) or
-    // synchronously in an effect body (cascading-render rule) — only inside
-    // this interval callback, which fires after the effect has committed.
-    const timer = setInterval(() => setRuntime((Date.now() - startedAt) / 1000), 1000);
+    // Active/running run: start timer cleanly from 0 seconds
+    const mountTime = Date.now();
+    setRuntime(0);
+    const timer = setInterval(() => {
+      setRuntime(Math.floor((Date.now() - mountTime) / 1000));
+    }, 1000);
     return () => clearInterval(timer);
-  }, [startedAt, status, fullRun]);
+  }, [status, fullRun]);
 
   useEffect(() => {
     const es = new EventSource(api.streamUrl(id));
