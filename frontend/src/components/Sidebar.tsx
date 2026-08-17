@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
-  Plus,
+  SquarePen,
   ListChecks,
   Settings,
   GitBranch,
@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 const links = [
-  { href: "/dashboard", label: "Dashboard", icon: Plus },
+  { href: "/dashboard", label: "Dashboard", icon: SquarePen },
   { href: "/runs", label: "Research Runs", icon: ListChecks },
   { href: "/evidence-graph", label: "Evidence Graph", icon: GitBranch },
   { href: "/reports", label: "Saved Reports", icon: Bookmark },
