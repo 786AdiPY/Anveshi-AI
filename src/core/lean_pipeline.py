@@ -128,13 +128,33 @@ def synthesize(model: Any, question: str, papers: list[Paper]) -> tuple[str, lis
 
 
 def build_graph_data(papers: list[Paper], claims: list[Claim]) -> dict[str, Any]:
-    """Assemble the claim/source graph the UI renders."""
-    nodes = [{"id": p.id, "label": p.title, "type": "source", "url": p.url} for p in papers]
-    nodes += [{"id": c.id, "label": c.statement, "type": "claim"} for c in claims]
-    edges = [
-        {"source": c.id, "target": c.paper_id, "relation": "supported_by"}
+    """Assemble the claim/source graph the UI renders.
+
+    Node/edge shape must match what EvidenceGraphCanvas expects (see
+    evidence_graph_agent.py, the original source of this convention): paper
+    nodes are typed "paper" (not "source"), and every edge needs a unique
+    "id" plus a "type" field — dagre throws if an edge references a node
+    that got filtered out for using the wrong type string, which blanks the
+    whole canvas rather than just hiding the mismatched nodes.
+    """
+    paper_ids = {p.id for p in papers}
+    nodes = [
+        {"id": p.id, "label": p.title, "type": "paper", "data": {"authors": p.authors, "year": p.year, "source_type": p.source_type}}
+        for p in papers
+    ]
+    nodes += [
+        {"id": c.id, "label": c.statement, "type": "claim", "data": {"verification_status": c.verification_status, "confidence": c.confidence_score}}
         for c in claims
-        if c.paper_id
+    ]
+    edges = [
+        {
+            "id": f"e-{c.id}-{c.paper_id}",
+            "source": c.id,
+            "target": c.paper_id,
+            "type": "supports",
+        }
+        for c in claims
+        if c.paper_id and c.paper_id in paper_ids
     ]
     return {"nodes": nodes, "edges": edges}
 

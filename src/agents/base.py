@@ -308,6 +308,9 @@ class BaseAgent(ABC):
                 f"({self.max_iterations} iterations) — forcing a final answer."
             )
             return self._force_final_answer(last_chunk)
+        except Exception as e:
+            logger.warning(f"Error in {self.agent_name}: {e} — forcing final answer / fallback.")
+            return self._force_final_answer(last_chunk)
 
     def _force_final_answer(self, last_chunk: Any) -> Any:
         """Ask the model to answer from what it already gathered, without tools.

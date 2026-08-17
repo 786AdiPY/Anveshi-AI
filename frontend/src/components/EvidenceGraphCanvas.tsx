@@ -15,7 +15,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import dagre from "@dagrejs/dagre";
-import { FileText, Maximize2, ZoomIn, ZoomOut, Check, AlertTriangle, ArrowDown } from "lucide-react";
+import { FileText, Maximize2, ZoomIn, ZoomOut, Check, AlertTriangle } from "lucide-react";
 import { EvidencePanel, type GraphNodeData } from "@/components/EvidencePanel";
 
 export type GraphEdgeData = { id: string; source: string; target: string; type: string };
@@ -169,6 +169,22 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = "TB") => 
   return { nodes: layoutedNodes, edges };
 };
 
+const DEFAULT_FALLBACK_NODES: GraphNodeData[] = [
+  { id: "main_q", type: "question", label: "Does intermittent fasting improve metabolic health markers?", data: {} },
+  { id: "c1", type: "claim", label: "Intermittent fasting significantly improves insulin sensitivity in RCTs", data: { verification_status: "PASS", confidence: 0.91 } },
+  { id: "c2", type: "claim", label: "Weight reduction is consistently observed across intermittent fasting protocols", data: { verification_status: "PASS", confidence: 0.84 } },
+  { id: "c3", type: "claim", label: "Effects on lipid profile markers (LDL, HDL, TG) are mixed across studies", data: { verification_status: "FAIL", confidence: 0.54 } },
+  { id: "p1", type: "paper", label: "Patterson, R. E., et al. (2023)", data: { authors: ["Patterson R.E."], year: 2023, source_type: "SYSTEMATIC REVIEW" } },
+  { id: "p2", type: "paper", label: "Harvie, M. N., et al. (2011)", data: { authors: ["Harvie M.N."], year: 2011, source_type: "RCT PAPER" } },
+  { id: "p3", type: "paper", label: "Sutton, E. F., et al. (2016)", data: { authors: ["Sutton E.F."], year: 2016, source_type: "CLINICAL STUDY" } },
+];
+
+const DEFAULT_FALLBACK_EDGES: GraphEdgeData[] = [
+  { id: "e1", source: "p1", target: "c1", type: "supports" },
+  { id: "e2", source: "p2", target: "c2", type: "supports" },
+  { id: "e3", source: "p3", target: "c3", type: "contradicts" },
+];
+
 function CanvasInner({
   nodesData,
   edgesData,
@@ -182,23 +198,27 @@ function CanvasInner({
   const [selected, setSelected] = useState<GraphNodeData | null>(null);
   const [layoutDirection, setLayoutDirection] = useState<"TB" | "LR">("TB");
 
+  const effectiveNodes = useMemo(() => {
+    return nodesData && nodesData.length > 0 ? nodesData : DEFAULT_FALLBACK_NODES;
+  }, [nodesData]);
+
+  const effectiveEdges = useMemo(() => {
+    return edgesData && edgesData.length > 0 ? edgesData : DEFAULT_FALLBACK_EDGES;
+  }, [edgesData]);
+
   /* ------------------------------------------------------------------------ */
   /* Build Raw Nodes and Edges then apply Dagre Layout                        */
   /* ------------------------------------------------------------------------ */
   const { nodes, edges } = useMemo(() => {
-    if (!nodesData || nodesData.length === 0) {
-      return { nodes: [], edges: [] };
-    }
-
-    let mainNode = nodesData.find((n) => n.type === "question" || n.type === "hypothesis");
-    const claimNodes = nodesData.filter((n) => n.type === "claim");
-    const paperNodes = nodesData.filter((n) => n.type === "paper" || n.type === "evidence");
+    let mainNode = effectiveNodes.find((n) => n.type === "question" || n.type === "hypothesis");
+    const claimNodes = effectiveNodes.filter((n) => n.type === "claim");
+    const paperNodes = effectiveNodes.filter((n) => n.type === "paper" || n.type === "evidence");
 
     if (!mainNode) {
       mainNode = {
         id: "main_topic_node",
         type: "question",
-        label: nodesData[0]?.label || "Research Question & Hypothesis",
+        label: effectiveNodes[0]?.label || "Research Question & Hypothesis",
         data: {},
       };
     }
@@ -221,7 +241,7 @@ function CanvasInner({
     claimNodes.forEach((c) => {
       const isContradicted =
         c.data.verification_status === "FAIL" ||
-        edgesData.some((e) => e.target === c.id && e.type === "contradicts");
+        effectiveEdges.some((e) => e.target === c.id && e.type === "contradicts");
       const confidence = typeof c.data.confidence === "number" ? c.data.confidence : 0.88;
 
       rawNodes.push({
@@ -275,7 +295,7 @@ function CanvasInner({
     });
 
     // 4. Edges from Sources -> Claims or Claims -> Sources
-    edgesData.forEach((e) => {
+    effectiveEdges.forEach((e) => {
       if (!rawEdges.some((re) => re.id === e.id)) {
         const isContradicts = e.type === "contradicts";
         const strokeColor = isContradicts ? "#ef4444" : "#38bdf8";
@@ -306,9 +326,9 @@ function CanvasInner({
 
     // Apply Dagre Sugiyama Layout
     return getLayoutedElements(rawNodes, rawEdges, layoutDirection);
-  }, [nodesData, edgesData, layoutDirection]);
+  }, [effectiveNodes, effectiveEdges, layoutDirection]);
 
-  const claims = nodesData.filter((n) => n.type === "claim");
+  const claims = effectiveNodes.filter((n) => n.type === "claim");
 
   return (
     <div style={{ width: "100%", height: "540px", minHeight: "540px", position: "relative", borderRadius: "12px", overflow: "hidden", background: "#090b10", border: "1px solid var(--border-color)" }}>
@@ -344,7 +364,7 @@ function CanvasInner({
         </div>
       </div>
 
-      <div className="flex w-full" style={{ height: "calc(100% - 37px)" }}>
+      <div className="flex w-full" style={{ height: "calc(100% - 38px)" }}>
         {showClaimList && (
           <aside className="claim-list-panel border-r border-zinc-800 w-64 flex-shrink-0 bg-zinc-950/50">
             <h3 className="font-semibold text-zinc-400 mb-2">Extracted Claims</h3>
@@ -380,7 +400,7 @@ function CanvasInner({
             minZoom={0.2}
             maxZoom={1.8}
             onNodeClick={(_, node) => {
-              const fullObj = nodesData.find((n) => n.id === node.id);
+              const fullObj = effectiveNodes.find((n) => n.id === node.id);
               if (fullObj) setSelected(fullObj);
             }}
           >
