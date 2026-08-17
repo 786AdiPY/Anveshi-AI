@@ -64,13 +64,18 @@ export default function ResearchRunsPage() {
     api
       .getHistory()
       .then((r) => {
-        if (r.history && r.history.length > 0) setHistory(r.history);
+        if (r.history && r.history.length > 0) {
+          const validHistory = r.history.filter((h) => h.status !== "failed");
+          if (validHistory.length > 0) setHistory(validHistory);
+        }
       })
       .catch(() => setOffline(false))
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = tab === "all" ? history : history.filter((h) => h.status === tab);
+  const filtered = (tab === "all" ? history : history.filter((h) => h.status === tab)).filter(
+    (h) => h.status !== "failed"
+  );
 
   return (
     <main className="page-container">

@@ -128,14 +128,46 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
+// In-memory response cache so switching between runs/tabs shows data
+// instantly instead of a blank loading state on every navigation. A run's
+// data is immutable once it reaches a terminal status, so those responses
+// cache indefinitely (until a page reload clears the module). A still-running
+// run is never cached — the live run page polls getRun() on every SSE event
+// specifically to show fresh progress, so caching it would make that view
+// lag behind by however long the TTL was.
+const RUN_CACHE = new Map<string, ResearchRun>();
+const HISTORY_TTL_MS = 15_000;
+let historyCache: { data: { history: HistoryItem[] }; ts: number } | null = null;
+
+function isTerminal(status: RunStatus): boolean {
+  return status === "completed" || status === "failed";
+}
+
+async function getRunCached(id: string): Promise<ResearchRun> {
+  const cached = RUN_CACHE.get(id);
+  if (cached) return cached;
+  const data = await req<ResearchRun>(`/api/research/${id}`);
+  if (isTerminal(data.status)) RUN_CACHE.set(id, data);
+  return data;
+}
+
+async function getHistoryCached(): Promise<{ history: HistoryItem[] }> {
+  if (historyCache && Date.now() - historyCache.ts < HISTORY_TTL_MS) {
+    return historyCache.data;
+  }
+  const data = await req<{ history: HistoryItem[] }>("/api/research/history");
+  historyCache = { data, ts: Date.now() };
+  return data;
+}
+
 export const api = {
   startResearch: (question: string, depth: ResearchDepth, files: string[] = []) =>
     req<{ id: string; status: string; question: string }>("/api/research", {
       method: "POST",
       body: JSON.stringify({ question, depth, files }),
     }),
-  getRun: (id: string) => req<ResearchRun>(`/api/research/${id}`),
-  getHistory: () => req<{ history: HistoryItem[] }>("/api/research/history"),
+  getRun: getRunCached,
+  getHistory: getHistoryCached,
   getGraph: (id: string) => req<{ nodes: unknown[]; edges: unknown[] }>(`/api/research/${id}/graph`),
   getAgentInspector: (id: string, agent: string) =>
     req<AgentInspectorData>(`/api/research/${id}/agents/${agent}`),

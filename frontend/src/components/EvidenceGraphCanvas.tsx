@@ -213,6 +213,12 @@ function CanvasInner({
     let mainNode = effectiveNodes.find((n) => n.type === "question" || n.type === "hypothesis");
     const claimNodes = effectiveNodes.filter((n) => n.type === "claim");
     const paperNodes = effectiveNodes.filter((n) => n.type === "paper" || n.type === "evidence");
+    // Contradiction nodes render as a claim card in its "bad" state (the
+    // "! CONTRADICTING" badge below). Any node type here that isn't bucketed
+    // into rawNodes leaves edges pointing at a node id dagre never received
+    // via setNode(), which throws during layout and blanks the whole canvas
+    // — so every node type evidence_graph_data can emit needs a home.
+    const contradictionNodes = effectiveNodes.filter((n) => n.type === "contradiction");
 
     if (!mainNode) {
       mainNode = {
@@ -279,7 +285,21 @@ function CanvasInner({
       });
     });
 
-    // 3. Paper / Source Nodes
+    // 3. Contradiction Nodes (reuse the claim card, forced into its bad state)
+    contradictionNodes.forEach((c) => {
+      rawNodes.push({
+        id: c.id,
+        type: "claimNode",
+        position: { x: 0, y: 0 },
+        data: {
+          label: c.label,
+          isContradicted: true,
+          verificationStatus: "FAIL",
+        },
+      });
+    });
+
+    // 4. Paper / Source Nodes
     paperNodes.forEach((p) => {
       rawNodes.push({
         id: p.id,
@@ -294,7 +314,7 @@ function CanvasInner({
       });
     });
 
-    // 4. Edges from Sources -> Claims or Claims -> Sources
+    // 5. Edges from Sources -> Claims or Claims -> Sources
     effectiveEdges.forEach((e) => {
       if (!rawEdges.some((re) => re.id === e.id)) {
         const isContradicts = e.type === "contradicts";
@@ -364,25 +384,22 @@ function CanvasInner({
         </div>
       </div>
 
-      <div className="flex w-full" style={{ height: "calc(100% - 38px)" }}>
+      <div className="graph-body">
         {showClaimList && (
-          <aside className="claim-list-panel border-r border-zinc-800 w-64 flex-shrink-0 bg-zinc-950/50">
-            <h3 className="font-semibold text-zinc-400 mb-2">Extracted Claims</h3>
+          <aside className="claim-list-panel graph-body__sidebar">
+            <h3>Extracted Claims</h3>
             <ul>
               {claims.map((c) => (
                 <li key={c.id}>
-                  <button
-                    onClick={() => setSelected(c)}
-                    className="claim-list-item hover:bg-zinc-800/60 p-2 rounded transition-colors text-left w-full"
-                  >
+                  <button onClick={() => setSelected(c)} className="claim-list-item">
                     <span
-                      className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
+                      className="claim-list-item__dot"
                       style={{
                         backgroundColor:
                           c.data.verification_status === "FAIL" ? "#ef4444" : "#10b981",
                       }}
                     />
-                    <span className="line-clamp-2 text-zinc-200">{c.label}</span>
+                    <span>{c.label}</span>
                   </button>
                 </li>
               ))}
@@ -390,7 +407,7 @@ function CanvasInner({
           </aside>
         )}
 
-        <main className="flex-1 relative bg-zinc-950">
+        <main className="graph-body__canvas">
           <ReactFlow
             nodes={nodes}
             edges={edges}

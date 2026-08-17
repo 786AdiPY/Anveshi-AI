@@ -1093,28 +1093,45 @@ select option {
 /* Research cards                                                          */
 /* ---------------------------------------------------------------------- */
 
+.page-container h1 {
+  font-size: 2.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 24px;
+}
+
 .research-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 22px;
+  margin-top: 20px;
 }
 
 .research-card {
-  display: block;
-  padding: 16px;
-  transition: border-color 0.15s, transform 0.15s;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 22px 24px;
+  border-radius: 14px;
+  min-height: 170px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
 .research-card:hover {
   border-color: var(--border-glow);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
 .research-card-top {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  font-size: 11px;
-  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 12px;
   text-transform: capitalize;
 }
 
@@ -1123,9 +1140,11 @@ select option {
 }
 
 .research-card-question {
-  font-size: 14px;
-  line-height: 1.4;
-  margin-bottom: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin-bottom: 18px;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -1134,16 +1153,19 @@ select option {
 
 .research-card-meta {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
-  font-size: 11.5px;
+  gap: 16px;
+  font-size: 12px;
   color: var(--text-muted);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 12px;
 }
 
 .research-card-meta span {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -1391,10 +1413,8 @@ select option {
 
 .agent-node-waiting { color: var(--text-muted); }
 .agent-node-running {
-  border-color: var(--border-glow);
+  border-color: var(--border-color);
   color: var(--text-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--border-glow) 12%, transparent);
-  animation: pulseGlow 2s infinite;
 }
 .agent-node-completed { border-color: var(--accent-emerald); color: var(--accent-emerald); }
 .agent-node-failed { border-color: var(--accent-rose); color: var(--accent-rose); }
@@ -2133,10 +2153,43 @@ select option {
   text-overflow: ellipsis;
 }
 
+/* Evidence graph body: sidebar + flow canvas.
+   ReactFlow measures its parent, so .graph-body__canvas needs a real height —
+   a parent that collapses to 0 renders an empty canvas with no error. This
+   project has no Tailwind, so these must be real rules, not utility classes. */
+.graph-body {
+  display: flex;
+  width: 100%;
+  height: calc(100% - 38px);
+}
+
+.graph-body__sidebar {
+  width: 256px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-color);
+  background: rgba(9, 11, 16, 0.5);
+}
+
+.graph-body__canvas {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  background: #09090b;
+}
+
 .claim-list-panel {
   padding: 16px;
   max-height: 560px;
   overflow-y: auto;
+}
+
+.claim-list-item__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  margin-top: 6px;
+  flex-shrink: 0;
 }
 
 .claim-list-panel h3 {
@@ -2722,12 +2775,12 @@ select option {
   gap: 8px;
 }
 
-/* Agent Node Icons & Custom Glows */
+/* Agent Node Icons — green marks done, everything else stays neutral text color */
 .node-icon-completed {
   color: #10b981;
 }
 .node-icon-running {
-  color: #8b5cf6;
+  color: var(--text-muted);
 }
 .node-icon-waiting {
   color: var(--text-muted);
@@ -2737,9 +2790,7 @@ select option {
 }
 
 .agent-node-running {
-  border-color: #8b5cf6 !important;
-  box-shadow: 0 0 16px rgba(139, 92, 246, 0.4) !important;
-  background: color-mix(in srgb, #8b5cf6 8%, var(--bg-card)) !important;
+  border-color: var(--border-color) !important;
 }
 
 .agent-node-completed {

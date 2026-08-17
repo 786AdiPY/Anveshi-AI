@@ -148,79 +148,111 @@ function ChapterRail() {
 
 // ── hero ─────────────────────────────────────────────────────────────────────
 function Hero() {
-  const reduced = useReducedMotion();
-  const tiltRef = useTilt3D<HTMLDivElement>(reduced ? 0 : 7);
+  const cta = useMagnetic<HTMLAnchorElement>(0.22);
 
   return (
     <section className="lp-hero">
-      <div className="lp-wrap">
-        <Reveal className="lp-hero__eyebrow">
-          <span className="lp-dot" aria-hidden="true" />
-          Multi-agent evidence verification for deep research
-        </Reveal>
+      <div className="lp-hero__inner">
+        <p className="lp-eyebrow">
+          <span className="lp-eyebrow__dot" aria-hidden="true" />
+          MULTI-AGENT RESEARCH — PLANNED, CHALLENGED, VERIFIED
+        </p>
 
-        <h1 className="lp-hero__title">
-          <RevealWords text="Answers you can" as="span" className="lp-hero__line" />
+        <h1 className="lp-display">
+          <RevealWords as="span" className="lp-display__line" text="Answers you can trace." />
           <RevealWords
-            text="actually prove."
             as="span"
-            className="lp-hero__line lp-hero__line--em"
-            start={2}
+            className="lp-display__line lp-display__line--em"
+            text="Not just answers."
+            start={3}
           />
         </h1>
 
-        <Reveal as="p" className="lp-hero__body" delay={2}>
-          Anveshi AI coordinates specialized agents to search literature, extract claims, hunt for
-          counter-evidence, and enforce strict verification gates — so every sentence in your
-          brief traces directly back to source text.
+        <Reveal className="lp-hero__lead" delay={4}>
+          <p>
+            Anveshi AI plans a research question, finds the literature, and extracts claims —
+            then turns an adversarial agent loose on its own findings. Nothing reaches your
+            report until the Verifier can trace it back to a real source.
+          </p>
         </Reveal>
 
-        <Reveal className="lp-hero__cta-row" delay={3}>
-          <Link href="/dashboard" className="lp-btn lp-btn--primary">
-            Start a research run
+        <Reveal className="lp-hero__actions" delay={5}>
+          <Link ref={cta} href="/dashboard" className="lp-btn lp-btn--solid">
+            Open the console
             <Arrow />
           </Link>
           <a href="#agents" className="lp-btn lp-btn--ghost">
-            Explore the 9 agents
+            See how it works
           </a>
         </Reveal>
 
-        <Reveal className="lp-hero__stage" delay={4}>
-          <div className="lp-card-stage" ref={tiltRef}>
-            <div className="lp-card-stage__glow" aria-hidden="true" />
-            <div className="lp-card-stage__card">
-              <div className="lp-card-stage__head">
-                <span className="lp-card-stage__status">
-                  <i className="lp-dot lp-dot--live" /> VERIFYING CLAIM 14/22
-                </span>
-                <span className="lp-mono lp-card-stage__id">RUN #8F2A</span>
-              </div>
-              <p className="lp-card-stage__query">
-                &ldquo;Does early time-restricted feeding improve insulin sensitivity independent of
-                weight loss?&rdquo;
-              </p>
-              <div className="lp-card-stage__split">
-                <div className="lp-card-stage__claim">
-                  <span className="lp-mono lp-card-stage__tag">EXTRACTED CLAIM</span>
-                  <p>
-                    &ldquo;eTRF improved insulin sensitivity by 24% (p=0.01) without significant
-                    changes in body mass.&rdquo;
-                  </p>
-                </div>
-                <div className="lp-card-stage__verdict">
-                  <span className="lp-mono lp-card-stage__tag lp-card-stage__tag--pass">
-                    VERIFIED · 98% FIDELITY
-                  </span>
-                  <p>
-                    Matched to <i>Sutton et al., Cell Metabolism 2018</i>, p.461, par. 3.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+        <Reveal className="lp-spec" delay={6}>
+          <SpecItem k="SOURCES" v="Academic papers · preprints · web · your files" />
+          <SpecItem k="AGENTS" v="9, LangGraph-orchestrated" />
+          <SpecItem k="GATE" v="PASS · FAIL · UNCERTAIN" />
+          <SpecItem k="LEDGER" v="Full execution trace, cost tracked" />
         </Reveal>
       </div>
+
+      <Reveal className="lp-hero__figure" delay={4}>
+        <HeroFigure />
+      </Reveal>
     </section>
+  );
+}
+
+function SpecItem({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="lp-spec__item">
+      <dt>{k}</dt>
+      <dd>{v}</dd>
+    </div>
+  );
+}
+
+function HeroFigure() {
+  const tilt = useTilt3D<HTMLDivElement>(10);
+
+  return (
+    <div className="lp-float">
+      <div className="lp-fig3d" ref={tilt}>
+        <figure className="lp-fig">
+          <span className="lp-fig__glare" aria-hidden="true" />
+
+          <figcaption className="lp-fig__head" data-depth="3">
+            <span className="lp-mono">claim_07 · verifier</span>
+            <span className="lp-tag lp-tag--pass">GATE PASSED</span>
+          </figcaption>
+
+          <div className="lp-fig__row" data-depth="2">
+            <span className="lp-fig__k">First pass</span>
+            <div className="lp-fig__track">
+              <div className="lp-fig__bar" style={{ width: "67%" }} />
+            </div>
+            <span className="lp-fig__v lp-mono">4 / 6</span>
+          </div>
+
+          <div className="lp-fig__row" data-depth="2">
+            <span className="lp-fig__k">After Challenger</span>
+            <div className="lp-fig__track">
+              <div className="lp-fig__bar lp-fig__bar--accent" style={{ width: "100%" }} />
+            </div>
+            <span className="lp-fig__v lp-mono">6 / 6</span>
+          </div>
+
+          <div className="lp-fig__foot" data-depth="4">
+            <div>
+              <span className="lp-fig__big lp-mono">3×</span>
+              <span className="lp-fig__lbl">max re-investigation loops</span>
+            </div>
+            <div>
+              <span className="lp-fig__big lp-mono">0</span>
+              <span className="lp-fig__lbl">unverified claims shipped</span>
+            </div>
+          </div>
+        </figure>
+      </div>
+    </div>
   );
 }
 
