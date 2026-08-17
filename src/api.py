@@ -37,8 +37,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# In-memory store for active and historical research runs
-RESEARCH_RUNS: Dict[str, Dict[str, Any]] = {}
+from src.mock_data import MOCK_RESEARCH_RUNS
+
+# In-memory store for active and historical research runs, pre-populated with mock representation data
+RESEARCH_RUNS: Dict[str, Dict[str, Any]] = dict(MOCK_RESEARCH_RUNS)
 
 # Hard ceiling on graph node executions per run. A full pass is roughly
 # Planner → Supervisor → sub-agent → Ledger → Verifier, repeated up to
