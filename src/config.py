@@ -24,8 +24,8 @@ TAVILY_API_KEY = (os.getenv('TAVILY_API_KEY') or '').strip()
 # Example: LLM_PROVIDER=groq, LLM_MODEL=llama-3.3-70b-versatile
 LLM_PROVIDER_OVERRIDE = (os.getenv('LLM_PROVIDER') or '').strip()
 LLM_MODEL_OVERRIDE = (os.getenv('LLM_MODEL') or '').strip()
-# Get Config Directory
-CONFIG_DIRECTORY = os.getenv('CONFIG_DIRECTORY', 'config')
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CONFIG_DIRECTORY = os.getenv('CONFIG_DIRECTORY', os.path.join(BASE_DIR, 'config'))
 
 
 class AgentModelsConfig:
