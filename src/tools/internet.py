@@ -29,6 +29,16 @@ _USER_AGENT = (
     "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 )
 _SEARCH_TIMEOUT = 30
+# Tool output goes straight into the agent's context and is resent on every
+# subsequent turn, so untrimmed snippets and page dumps blow the provider's
+# per-minute token limit within a few tool calls.
+_SNIPPET_CHARS = 400
+_SCRAPE_CHARS = 6000
+
+
+def _truncate(text: str, limit: int) -> str:
+    text = text.strip()
+    return text if len(text) <= limit else text[:limit].rstrip() + " …[truncated]"
 
 
 def _format_results(results: List[dict]) -> str:
@@ -36,7 +46,9 @@ def _format_results(results: List[dict]) -> str:
     blocks = []
     for item in results:
         title = (item.get("title") or "No Title").strip()
-        snippet = (item.get("snippet") or "No Snippet").strip().replace("\n", " ")
+        snippet = _truncate(
+            (item.get("snippet") or "No Snippet").replace("\n", " "), _SNIPPET_CHARS
+        )
         link = (item.get("link") or "No Link").strip()
         blocks.append(f"{title}\n{snippet}\n{link}\n")
     return "\n".join(blocks)
@@ -274,7 +286,7 @@ def scrape_webpages(urls: Annotated[List[str], "List of URLs to scrape"]) -> Ann
     Attempt to scrape webpages using fastCRW, falling back to FireCrawl then WebBaseLoader if unsuccessful.
     """
     try:
-        return _crw_scrape_webpages(urls)
+        return _truncate(_crw_scrape_webpages(urls), _SCRAPE_CHARS)
     except Exception as e:
         logger.warning(f"fastCRW scraping failed: {str(e)}. Falling back to FireCrawl.")
     try:
