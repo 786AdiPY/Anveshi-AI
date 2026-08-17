@@ -13,50 +13,102 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { CheckCircle2, XCircle, FileText, Maximize2, ZoomIn, ZoomOut } from "lucide-react";
+import { FileText, Maximize2, ZoomIn, ZoomOut } from "lucide-react";
 import { EvidencePanel, type GraphNodeData } from "@/components/EvidencePanel";
 
 export type GraphEdgeData = { id: string; source: string; target: string; type: string };
 
 /* -------------------------------------------------------------------------- */
-/* Custom ReactFlow Nodes for Radial Mind-Map Evidence Network               */
+/* Custom ReactFlow Nodes for Knowledge Graph Network                         */
 /* -------------------------------------------------------------------------- */
 
-function MainClaimNode({ data }: NodeProps & { data: { label: string } }) {
+function MainClaimNode({ data }: NodeProps & { data: { label: string; stats?: string } }) {
   return (
     <div className="graph-node-main-claim">
-      <Handle type="target" position={Position.Top} className="graph-handle" />
-      <Handle type="target" position={Position.Left} className="graph-handle" />
-      <Handle type="source" position={Position.Right} className="graph-handle" />
-      <Handle type="source" position={Position.Bottom} className="graph-handle" />
-      <span className="graph-node-main-claim__title">{data.label}</span>
+      <Handle type="source" position={Position.Right} id="right" className="graph-handle" />
+      <div className="graph-node-main-claim__badge">
+        <span className="graph-node-main-claim__dot" />
+        <span>MAIN RESEARCH QUESTION</span>
+      </div>
+      <div className="graph-node-main-claim__title">{data.label}</div>
+      <div className="graph-node-main-claim__footer">
+        {data.stats || "Core Hypothesis • Evidence Network"}
+      </div>
     </div>
   );
 }
 
-function ClaimCustomNode({ data }: NodeProps & { data: { label: string; isContradicted?: boolean; verificationStatus?: string } }) {
+function ClaimCustomNode({
+  data,
+}: NodeProps & {
+  data: {
+    label: string;
+    isContradicted?: boolean;
+    verificationStatus?: string;
+    confidence?: number;
+  };
+}) {
   const isBad = data.isContradicted || data.verificationStatus === "FAIL";
+  const isPass = data.verificationStatus === "PASS";
+  const statusColor = isBad ? "#ef4444" : isPass ? "#10b981" : "#f59e0b";
+
   return (
     <div className={`graph-node-claim ${isBad ? "graph-node-claim--bad" : "graph-node-claim--good"}`}>
-      <Handle type="target" position={Position.Top} className="graph-handle" />
-      <Handle type="target" position={Position.Left} className="graph-handle" />
-      <Handle type="source" position={Position.Right} className="graph-handle" />
-      <Handle type="source" position={Position.Bottom} className="graph-handle" />
-      <span className="graph-node-claim__dot" />
-      <span className="graph-node-claim__label">{data.label}</span>
+      <Handle type="target" position={Position.Left} id="target-left" className="graph-handle" />
+      <Handle type="source" position={Position.Right} id="source-right" className="graph-handle" />
+
+      <div className="graph-node-claim__header">
+        <div className="graph-node-claim__badge">
+          <span className="graph-node-claim__dot" />
+          <span>{isBad ? "CONTRADICTS CLAIM" : "SUPPORTS CLAIM"}</span>
+        </div>
+        <span className="graph-node-claim__status-tag" style={{ borderColor: statusColor, color: statusColor }}>
+          {data.verificationStatus || "PASS"}
+        </span>
+      </div>
+
+      <div className="graph-node-claim__label">{data.label}</div>
+
+      {typeof data.confidence === "number" && (
+        <div className="graph-node-claim__confidence">
+          <div className="graph-node-claim__confidence-bar">
+            <div
+              className="graph-node-claim__confidence-fill"
+              style={{ width: `${Math.round(data.confidence * 100)}%`, backgroundColor: statusColor }}
+            />
+          </div>
+          <span className="graph-node-claim__confidence-val">{Math.round(data.confidence * 100)}% Verified</span>
+        </div>
+      )}
     </div>
   );
 }
 
-function SourceCustomNode({ data }: NodeProps & { data: { label: string } }) {
+function SourceCustomNode({
+  data,
+}: NodeProps & {
+  data: {
+    label: string;
+    authors?: string[];
+    year?: number;
+    sourceType?: string;
+  };
+}) {
   return (
     <div className="graph-node-source">
-      <Handle type="target" position={Position.Top} className="graph-handle" />
-      <Handle type="target" position={Position.Left} className="graph-handle" />
-      <Handle type="source" position={Position.Right} className="graph-handle" />
-      <Handle type="source" position={Position.Bottom} className="graph-handle" />
-      <FileText size={12} className="graph-node-source__icon" />
-      <span className="graph-node-source__label">{data.label}</span>
+      <Handle type="target" position={Position.Left} id="target-left" className="graph-handle" />
+
+      <div className="graph-node-source__header">
+        <FileText size={13} className="graph-node-source__icon" />
+        <span className="graph-node-source__type">{data.sourceType || "DOCUMENT SOURCE"}</span>
+      </div>
+
+      <div className="graph-node-source__title">{data.label}</div>
+
+      <div className="graph-node-source__meta">
+        {data.authors && data.authors.length > 0 ? data.authors[0] : "Verified Source"}
+        {data.year ? ` • ${data.year}` : ""}
+      </div>
     </div>
   );
 }
@@ -71,7 +123,7 @@ const LEGEND: { label: string; color: string }[] = [
   { label: "Supports", color: "#10b981" },
   { label: "Contradicts", color: "#ef4444" },
   { label: "Main Claim", color: "#a855f7" },
-  { label: "Source", color: "#6b7280" },
+  { label: "Source", color: "#38bdf8" },
 ];
 
 function CanvasInner({
@@ -87,146 +139,118 @@ function CanvasInner({
   const [selected, setSelected] = useState<GraphNodeData | null>(null);
 
   /* ------------------------------------------------------------------------ */
-  /* Radial Layout Node Positioning                                            */
+  /* Left-to-Right Hierarchical Knowledge Network Layout Math                  */
   /* ------------------------------------------------------------------------ */
   const { nodes, edges } = useMemo(() => {
     if (!nodesData || nodesData.length === 0) {
       return { nodes: [], edges: [] };
     }
 
-    // Separate main topic node vs claim nodes vs paper/source nodes
     let mainNode = nodesData.find((n) => n.type === "question" || n.type === "hypothesis");
     const claimNodes = nodesData.filter((n) => n.type === "claim");
     const paperNodes = nodesData.filter((n) => n.type === "paper" || n.type === "evidence");
 
-    // If no explicit main node, treat first claim or synthesized topic as main node
     if (!mainNode) {
       mainNode = {
         id: "main_topic_node",
         type: "question",
-        label: nodesData[0]?.label || "Research Topic",
+        label: nodesData[0]?.label || "Research Question & Hypothesis",
         data: {},
       };
     }
 
-    const CENTER_X = 500;
-    const CENTER_Y = 270;
-
     const formattedNodes: Node[] = [];
+    const formattedEdges: Edge[] = [];
 
-    // 1. Center Main Claim Node
+    // Column 1: Main Research Question (Left)
+    const mainY = Math.max(120, (claimNodes.length * 180) / 2 - 40);
     formattedNodes.push({
       id: mainNode.id,
       type: "mainClaim",
-      position: { x: CENTER_X - 70, y: CENTER_Y - 25 },
-      data: { label: mainNode.label },
+      position: { x: 40, y: mainY },
+      data: {
+        label: mainNode.label,
+        stats: `${claimNodes.length} Claims • ${paperNodes.length} Sources Verified`,
+      },
     });
 
-    // Map paper connections to claims
-    const papersByClaim = new Map<string, GraphNodeData[]>();
-    edgesData.forEach((e) => {
-      if (e.source.startsWith("paper_") || e.source.startsWith("paper")) {
-        const list = papersByClaim.get(e.target) || [];
-        const paperObj = paperNodes.find((p) => p.id === e.source);
-        if (paperObj && !list.some((p) => p.id === paperObj.id)) {
-          list.push(paperObj);
-        }
-        papersByClaim.set(e.target, list);
-      }
-    });
-
-    // 2. Radial Ring 1: Claims around Center
-    const numClaims = claimNodes.length || 1;
-    const RX_CLAIM = 250;
-    const RY_CLAIM = 160;
-
+    // Column 2: Claims (Center)
     claimNodes.forEach((c, idx) => {
-      const angle = (2 * Math.PI * idx) / numClaims - Math.PI / 2;
-      const cx = CENTER_X + RX_CLAIM * Math.cos(angle);
-      const cy = CENTER_Y + RY_CLAIM * Math.sin(angle);
-
+      const claimY = 40 + idx * 180;
       const isContradicted =
         c.data.verification_status === "FAIL" ||
         edgesData.some((e) => e.target === c.id && e.type === "contradicts");
+      const confidence = typeof c.data.confidence === "number" ? c.data.confidence : 0.85;
 
       formattedNodes.push({
         id: c.id,
         type: "claimNode",
-        position: { x: cx - 80, y: cy - 20 },
+        position: { x: 440, y: claimY },
         data: {
           label: c.label,
           isContradicted,
           verificationStatus: String(c.data.verification_status ?? "PASS"),
+          confidence,
         },
       });
 
-      // 3. Radial Ring 2: Sources near connected Claim Node
-      const connectedPapers = papersByClaim.get(c.id) || [];
-      const numPapers = connectedPapers.length;
-
-      connectedPapers.forEach((p, pIdx) => {
-        const angleSpread = 0.55;
-        const startAngle = angle - (numPapers > 1 ? angleSpread / 2 : 0);
-        const pAngle = startAngle + (numPapers > 1 ? (angleSpread * pIdx) / (numPapers - 1) : 0);
-
-        const px = cx + 175 * Math.cos(pAngle);
-        const py = cy + 130 * Math.sin(pAngle);
-
-        if (!formattedNodes.some((n) => n.id === p.id)) {
-          formattedNodes.push({
-            id: p.id,
-            type: "sourceNode",
-            position: { x: px - 60, y: py - 18 },
-            data: { label: p.label },
-          });
-        }
-      });
-    });
-
-    // Add remaining orphan paper nodes
-    paperNodes.forEach((p, pIdx) => {
-      if (!formattedNodes.some((n) => n.id === p.id)) {
-        const angle = (2 * Math.PI * pIdx) / (paperNodes.length || 1) + Math.PI / 4;
-        formattedNodes.push({
-          id: p.id,
-          type: "sourceNode",
-          position: { x: CENTER_X + 420 * Math.cos(angle) - 60, y: CENTER_Y + 260 * Math.sin(angle) - 18 },
-          data: { label: p.label },
-        });
-      }
-    });
-
-    // 4. Edges construction
-    const formattedEdges: Edge[] = [];
-
-    // Center -> Claims edges
-    claimNodes.forEach((c) => {
-      const isContradicted =
-        c.data.verification_status === "FAIL" ||
-        edgesData.some((e) => e.target === c.id && e.type === "contradicts");
-
+      // Connect Main Node -> Claim Node
       formattedEdges.push({
         id: `e-main-${c.id}`,
         source: mainNode!.id,
         target: c.id,
-        animated: false,
+        sourceHandle: "right",
+        targetHandle: "target-left",
+        animated: true,
         style: {
           stroke: isContradicted ? "#ef4444" : "#10b981",
-          strokeWidth: 1.8,
+          strokeWidth: 2,
         },
       });
     });
 
-    // Papers -> Claims edges
+    // Column 3: Paper / Document Sources (Right)
+    const paperYMap = new Map<string, number>();
+    paperNodes.forEach((p, idx) => {
+      // Find connected claim if any
+      const connEdge = edgesData.find((e) => e.source === p.id || e.target === p.id);
+      let pY = 40 + idx * 140;
+
+      if (connEdge) {
+        const claimIdx = claimNodes.findIndex((c) => c.id === connEdge.target || c.id === connEdge.source);
+        if (claimIdx !== -1) {
+          pY = 40 + claimIdx * 180 + (idx % 2) * 80;
+        }
+      }
+      paperYMap.set(p.id, pY);
+
+      formattedNodes.push({
+        id: p.id,
+        type: "sourceNode",
+        position: { x: 860, y: pY },
+        data: {
+          label: p.label,
+          authors: Array.isArray(p.data?.authors) ? (p.data.authors as string[]) : undefined,
+          year: typeof p.data?.year === "number" ? (p.data.year as number) : undefined,
+          sourceType: typeof p.data?.source_type === "string" ? String(p.data.source_type) : "PAPER",
+        },
+      });
+    });
+
+    // Connect Paper Sources -> Claims or Claims -> Papers
     edgesData.forEach((e) => {
       if (!formattedEdges.some((fe) => fe.id === e.id)) {
+        const isSourcePaper = paperNodes.some((p) => p.id === e.source);
         formattedEdges.push({
           id: e.id,
-          source: e.source,
-          target: e.target,
+          source: isSourcePaper ? e.target : e.source,
+          target: isSourcePaper ? e.source : e.target,
+          sourceHandle: "source-right",
+          targetHandle: "target-left",
+          animated: false,
           style: {
-            stroke: e.type === "contradicts" ? "#ef4444" : "#4b5563",
-            strokeWidth: 1.2,
+            stroke: e.type === "contradicts" ? "#ef4444" : "#38bdf8",
+            strokeWidth: 1.5,
             strokeDasharray: e.type === "contradicts" ? "4,4" : undefined,
           },
         });
@@ -238,75 +262,74 @@ function CanvasInner({
 
   const claims = nodesData.filter((n) => n.type === "claim");
 
-  function focusNode(node: GraphNodeData) {
-    setSelected(node);
-    fitView({ nodes: [{ id: node.id }], duration: 400, maxZoom: 1.2 });
-  }
-
   return (
-    <div className={showClaimList ? "graph-layout" : "graph-layout graph-layout--no-list"}>
-      {showClaimList && (
-        <aside className="claim-list-panel glass-card">
-          <h3>Claims</h3>
-          <ul>
-            {claims.map((c) => (
-              <li key={c.id}>
-                <button onClick={() => focusNode(c)} className="claim-list-item">
-                  {c.data.verification_status === "FAIL" ? (
-                    <XCircle size={13} color="var(--accent-rose)" />
-                  ) : (
-                    <CheckCircle2 size={13} color="var(--accent-emerald)" />
-                  )}
-                  <span>{c.label}</span>
-                </button>
-              </li>
-            ))}
-            {claims.length === 0 && <p className="muted">No claims yet.</p>}
-          </ul>
-        </aside>
-      )}
-
-      <div style={{ flex: 1, minWidth: 0, position: "relative" }}>
-        {/* Top Control Bar with Legend & Zoom Controls matching Expected UI */}
-        <div className="graph-toolbar">
-          <div className="graph-legend">
-            {LEGEND.map(({ label, color }) => (
-              <span key={label} className="graph-legend__item">
-                <i style={{ background: color }} /> {label}
-              </span>
-            ))}
-          </div>
-          <div className="graph-zoom-controls">
-            <button className="graph-zoom-btn" onClick={() => zoomOut()} aria-label="Zoom out">
-              <ZoomOut size={13} />
-            </button>
-            <span className="graph-zoom-val">100%</span>
-            <button className="graph-zoom-btn" onClick={() => zoomIn()} aria-label="Zoom in">
-              <ZoomIn size={13} />
-            </button>
-            <button className="graph-zoom-btn" onClick={() => fitView({ duration: 300 })} aria-label="Fit view">
-              <Maximize2 size={13} />
-            </button>
-          </div>
+    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+      {/* Top Legend Toolbar */}
+      <div className="graph-toolbar flex items-center justify-between px-4 py-2 bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800 text-xs">
+        <div className="flex items-center gap-4">
+          {LEGEND.map(({ label, color }) => (
+            <span key={label} className="flex items-center gap-1.5 text-zinc-400">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
+              {label}
+            </span>
+          ))}
         </div>
+        <div className="flex items-center gap-1">
+          <button onClick={() => zoomIn()} className="graph-zoom-btn" title="Zoom In">
+            <ZoomIn size={14} />
+          </button>
+          <button onClick={() => zoomOut()} className="graph-zoom-btn" title="Zoom Out">
+            <ZoomOut size={14} />
+          </button>
+          <button onClick={() => fitView({ padding: 0.2 })} className="graph-zoom-btn" title="Fit View">
+            <Maximize2 size={14} />
+          </button>
+        </div>
+      </div>
 
-        <div className="canvas-wrapper glass-card">
+      <div className="flex w-full" style={{ height: "calc(100% - 37px)" }}>
+        {showClaimList && (
+          <aside className="claim-list-panel border-r border-zinc-800 w-64 flex-shrink-0 bg-zinc-950/50">
+            <h3 className="font-semibold text-zinc-400 mb-2">Extracted Claims</h3>
+            <ul>
+              {claims.map((c) => (
+                <li key={c.id}>
+                  <button
+                    onClick={() => setSelected(c)}
+                    className="claim-list-item hover:bg-zinc-800/60 p-2 rounded transition-colors text-left w-full"
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
+                      style={{
+                        backgroundColor:
+                          c.data.verification_status === "FAIL" ? "#ef4444" : "#10b981",
+                      }}
+                    />
+                    <span className="line-clamp-2 text-zinc-200">{c.label}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        )}
+
+        <main className="flex-1 relative bg-zinc-950">
           <ReactFlow
             nodes={nodes}
             edges={edges}
             nodeTypes={customNodeTypes}
             fitView
-            proOptions={{ hideAttribution: true }}
-            nodesDraggable
-            nodesConnectable={false}
+            fitViewOptions={{ padding: 0.25 }}
+            minZoom={0.2}
+            maxZoom={1.8}
             onNodeClick={(_, node) => {
-              const match = nodesData.find((n) => n.id === node.id);
-              if (match) focusNode(match);
+              const fullObj = nodesData.find((n) => n.id === node.id);
+              if (fullObj) setSelected(fullObj);
             }}
           >
-            <Background gap={24} color="rgba(255,255,255,0.06)" />
+            <Background color="#27272a" gap={24} size={1} />
           </ReactFlow>
-        </div>
+        </main>
       </div>
 
       {selected && <EvidencePanel node={selected} onClose={() => setSelected(null)} />}
@@ -315,17 +338,24 @@ function CanvasInner({
 }
 
 export function EvidenceGraphCanvas({
+  nodes,
+  edges,
   nodesData,
   edgesData,
-  showClaimList = true,
+  showClaimList = false,
 }: {
-  nodesData: GraphNodeData[];
-  edgesData: GraphEdgeData[];
+  nodes?: GraphNodeData[];
+  edges?: GraphEdgeData[];
+  nodesData?: GraphNodeData[];
+  edgesData?: GraphEdgeData[];
   showClaimList?: boolean;
 }) {
+  const finalNodes = nodesData ?? nodes ?? [];
+  const finalEdges = edgesData ?? edges ?? [];
+
   return (
     <ReactFlowProvider>
-      <CanvasInner nodesData={nodesData} edgesData={edgesData} showClaimList={showClaimList} />
+      <CanvasInner nodesData={finalNodes} edgesData={finalEdges} showClaimList={showClaimList} />
     </ReactFlowProvider>
   );
 }
