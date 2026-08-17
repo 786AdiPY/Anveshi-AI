@@ -45,7 +45,7 @@ class VerifierAgent(BaseAgent):
         )
 
     def _get_tools(self) -> List:
-        return [scrape_webpages, list_directory]
+        return [scrape_webpages]
 
     def get_state_updates(self, state: "State", output: Any) -> dict[str, Any]:
         """

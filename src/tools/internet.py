@@ -1,60 +1,187 @@
+import json
+import os
+import urllib.parse
+import urllib.request
+
 from langchain_core.tools import tool
 from langchain_community.document_loaders import WebBaseLoader, FireCrawlLoader
 # fastCRW (Firecrawl-compatible web scraper; single binary, self-host or cloud)
 from langchain_crw import CrwLoader
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from typing import Annotated, List
 from bs4 import BeautifulSoup
 
 from ..logger import setup_logger
-from ..config import FIRECRAWL_API_KEY,CRW_API_KEY,CRW_API_URL,CHROMEDRIVER_PATH
+from ..config import (
+    FIRECRAWL_API_KEY,
+    CRW_API_KEY,
+    CRW_API_URL,
+    CHROMEDRIVER_PATH,
+    TAVILY_API_KEY,
+)
 # Set up logger
 logger = setup_logger()
 
+# Browsers are only used as a last-resort search backend, so Selenium is
+# imported lazily: a machine without Chrome or a driver must still be able to
+# import this module and use the API-based backends.
+_USER_AGENT = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+)
+_SEARCH_TIMEOUT = 30
+
+
+def _format_results(results: List[dict]) -> str:
+    """Render search results as the plain title/snippet/link blocks agents parse."""
+    blocks = []
+    for item in results:
+        title = (item.get("title") or "No Title").strip()
+        snippet = (item.get("snippet") or "No Snippet").strip().replace("\n", " ")
+        link = (item.get("link") or "No Link").strip()
+        blocks.append(f"{title}\n{snippet}\n{link}\n")
+    return "\n".join(blocks)
+
+
+def _tavily_search(query: str, max_results: int = 5) -> List[dict]:
+    """Search via the Tavily API. Requires TAVILY_API_KEY."""
+    if not TAVILY_API_KEY:
+        raise ValueError("Tavily API key is not set")
+
+    payload = json.dumps(
+        {
+            "query": query,
+            "max_results": max_results,
+            "search_depth": "basic",
+            "include_answer": False,
+        }
+    ).encode("utf-8")
+    request = urllib.request.Request(
+        "https://api.tavily.com/search",
+        data=payload,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {TAVILY_API_KEY}",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=_SEARCH_TIMEOUT) as response:
+        data = json.load(response)
+
+    results = [
+        {
+            "title": item.get("title"),
+            "snippet": item.get("content"),
+            "link": item.get("url"),
+        }
+        for item in data.get("results", [])
+    ]
+    if not results:
+        raise ValueError("Tavily returned no results")
+    return results
+
+
+def _duckduckgo_search(query: str, max_results: int = 5) -> List[dict]:
+    """Search via DuckDuckGo's keyless HTML endpoint."""
+    url = "https://html.duckduckgo.com/html/?q=" + urllib.parse.quote_plus(query)
+    request = urllib.request.Request(url, headers={"User-Agent": _USER_AGENT})
+    with urllib.request.urlopen(request, timeout=_SEARCH_TIMEOUT) as response:
+        html = response.read().decode("utf-8", errors="replace")
+
+    soup = BeautifulSoup(html, "html.parser")
+    results = []
+    for node in soup.select(".result")[: max_results * 2]:
+        link_element = node.select_one("a.result__a")
+        if not link_element:
+            continue
+        link = link_element.get("href", "")
+        # DuckDuckGo wraps outbound links in a redirector; unwrap to the target.
+        if "uddg=" in link:
+            parsed = urllib.parse.parse_qs(urllib.parse.urlparse(link).query)
+            link = parsed.get("uddg", [link])[0]
+        snippet_element = node.select_one(".result__snippet")
+        results.append(
+            {
+                "title": link_element.get_text(strip=True),
+                "snippet": snippet_element.get_text(strip=True) if snippet_element else "",
+                "link": link,
+            }
+        )
+        if len(results) >= max_results:
+            break
+
+    if not results:
+        raise ValueError("DuckDuckGo returned no results")
+    return results
+
+
+def _selenium_google_search(query: str, max_results: int = 5) -> List[dict]:
+    """Scrape Google with a headless browser. Needs Chrome plus a driver."""
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+    from selenium.webdriver.chrome.service import Service
+
+    chrome_options = Options()
+    chrome_options.add_argument("--headless=new")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    # An explicit driver path is optional: without it Selenium Manager resolves
+    # a driver for the installed Chrome.
+    service = Service(CHROMEDRIVER_PATH) if os.path.exists(CHROMEDRIVER_PATH) else Service()
+
+    with webdriver.Chrome(options=chrome_options, service=service) as driver:
+        driver.set_page_load_timeout(_SEARCH_TIMEOUT)
+        driver.get("https://www.google.com/search?q=" + urllib.parse.quote_plus(query))
+        html = driver.page_source
+
+    soup = BeautifulSoup(html, "html.parser")
+    results = []
+    for node in soup.select(".g")[:max_results]:
+        title_element = node.select_one("h3")
+        snippet_element = node.select_one(".VwiC3b")
+        link_element = node.select_one("a")
+        results.append(
+            {
+                "title": title_element.text if title_element else "",
+                "snippet": snippet_element.text if snippet_element else "",
+                "link": link_element["href"] if link_element else "",
+            }
+        )
+
+    if not results:
+        raise ValueError("Google returned no parseable results")
+    return results
+
+
 @tool
-def google_search(query: Annotated[str, "The search query to use"]) -> Annotated[str, "The top 5 Google search results."]:
+def google_search(query: Annotated[str, "The search query to use"]) -> Annotated[str, "The top 5 web search results."]:
     """
-    Perform a Google search based on the given query and return the top 5 results.
+    Search the web for the given query and return the top 5 results.
 
-    This function uses Selenium to perform a headless Google search and BeautifulSoup to parse the results.
-
+    Each result is returned as a title, a snippet, and a URL. Backends are tried
+    in order — Tavily, DuckDuckGo, then a headless Google scrape — so the search
+    still works when an API key is missing or a browser is unavailable.
     """
-    try:
-        logger.info(f"Performing Google search for query: {query}")
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        service = Service(CHROMEDRIVER_PATH)
+    logger.info(f"Performing web search for query: {query}")
+    backends = (
+        ("Tavily", _tavily_search),
+        ("DuckDuckGo", _duckduckgo_search),
+        ("Google/Selenium", _selenium_google_search),
+    )
 
-        with webdriver.Chrome(options=chrome_options, service=service) as driver:
-            # Set a timeout to prevent hanging on slow network
-            driver.set_page_load_timeout(30)
-            url = f"https://www.google.com/search?q={query}"
-            logger.debug(f"Accessing URL: {url}")
-            driver.get(url)
-            html = driver.page_source
+    errors = []
+    for name, backend in backends:
+        try:
+            results = backend(query, 5)
+        except Exception as e:
+            logger.warning(f"{name} search failed: {e}")
+            errors.append(f"{name}: {e}")
+            continue
+        logger.info(f"Web search completed successfully via {name}")
+        return _format_results(results)
 
-        soup = BeautifulSoup(html, 'html.parser')
-        search_results = soup.select('.g') 
-        search = ""
-        for result in search_results[:5]:
-            title_element = result.select_one('h3')
-            title = title_element.text if title_element else 'No Title'
-            snippet_element = result.select_one('.VwiC3b')
-            snippet = snippet_element.text if snippet_element else 'No Snippet'
-            link_element = result.select_one('a')
-            link = link_element['href'] if link_element else 'No Link'
-            search += f"{title}\n{snippet}\n{link}\n\n"
+    logger.error(f"All web search backends failed: {'; '.join(errors)}")
+    return f"Error: web search failed on all backends ({'; '.join(errors)})"
 
-        logger.info("Google search completed successfully")
-        return search
-    except Exception as e:
-        logger.error(f"Error during Google search: {str(e)}")
-        return f'Error: {e}'
-\
+
 def _scrape_webpages(urls: Annotated[List[str], "List of URLs to scrape"]) -> Annotated[str, "The scraped content from WebBaseLoader."]:
     """
     Scrape the provided web pages for detailed information using WebBaseLoader.

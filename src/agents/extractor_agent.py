@@ -37,7 +37,7 @@ class ExtractorAgent(BaseAgent):
         )
 
     def _get_tools(self) -> List:
-        return [collect_data, scrape_webpages, list_directory]
+        return [scrape_webpages]
 
     def get_state_updates(self, state: "State", output: Any) -> dict[str, Any]:
         """Parse Claims and Evidence from extraction output."""

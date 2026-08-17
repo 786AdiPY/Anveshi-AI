@@ -117,12 +117,14 @@ class UpdateSettingsRequest(BaseModel):
     default_model: Optional[str] = "openai/gpt-4o-mini"
     research_depth: Optional[str] = "standard"
     max_cost_usd: Optional[float] = 2.0
+    max_verification_loops: Optional[int] = 3
 
 
 SETTINGS_STORE: Dict[str, Any] = {
     "default_model": "openai/gpt-4o-mini",
     "research_depth": "standard",
     "max_cost_usd": 2.0,
+    "max_verification_loops": 3,
 }
 
 
@@ -136,7 +138,9 @@ def run_research_background(run_id: str, question: str):
     try:
         system = MultiAgentSystem()
         graph = system.workflow_manager.get_graph()
-        initial_state = create_initial_state(question)
+        initial_state = create_initial_state(
+            question, max_verification_loops=SETTINGS_STORE.get("max_verification_loops", 3)
+        )
 
         events = graph.stream(
             initial_state,
@@ -193,7 +197,24 @@ def run_research_background(run_id: str, question: str):
             }
             persist_run(run_entry)
 
-        run_entry["status"] = "completed"
+        # Agents swallow their own exceptions so the graph can finish, which
+        # means the stream ends normally even when every node failed. Only call
+        # a run completed if it actually produced something.
+        final_state = run_entry.get("latest_state", {})
+        produced_output = bool(
+            final_state.get("research_brief")
+            or final_state.get("papers")
+            or final_state.get("claims")
+        )
+        if produced_output:
+            run_entry["status"] = "completed"
+        else:
+            run_entry["status"] = "failed"
+            run_entry["error"] = run_entry.get("error") or (
+                "The run finished without gathering any sources or claims. "
+                "Check the backend logs for agent errors (model credentials, "
+                "provider credits, or search backend)."
+            )
         run_entry["completed_at"] = datetime.utcnow().isoformat()
         persist_run(run_entry)
 
@@ -227,35 +248,43 @@ async def start_research(payload: StartResearchRequest):
     return {"id": run_id, "status": "started", "question": payload.question}
 
 
+def _count_verified(claims: list) -> int:
+    return sum(1 for c in claims if (c.get("verification_status") if isinstance(c, dict) else None) == "PASS")
+
+
+def _runtime_seconds(r: Dict[str, Any]) -> Optional[float]:
+    started, completed = r.get("started_at"), r.get("completed_at")
+    if not started or not completed:
+        return None
+    try:
+        return (datetime.fromisoformat(completed) - datetime.fromisoformat(started)).total_seconds()
+    except ValueError:
+        return None
+
+
+def _history_row(r: Dict[str, Any]) -> Dict[str, Any]:
+    state = r.get("latest_state") or {}
+    claims = state.get("claims", [])
+    return {
+        "id": r["id"],
+        "question": r["question"],
+        "status": r["status"],
+        "depth": r["depth"],
+        "created_at": r["created_at"],
+        "runtime_seconds": _runtime_seconds(r),
+        "papers_count": len(state.get("papers", [])),
+        "claims_count": len(claims),
+        "verified_count": _count_verified(claims),
+        "contradictions_count": len(state.get("contradictions", [])),
+        "has_report": bool(state.get("research_brief")),
+    }
+
+
 @app.get("/api/research/history")
 async def get_history():
     """Get list of past and active research runs (in-memory + Supabase, deduplicated)."""
-    history = []
-    for r in RESEARCH_RUNS.values():
-        state = r.get("latest_state", {})
-        history.append({
-            "id": r["id"],
-            "question": r["question"],
-            "status": r["status"],
-            "depth": r["depth"],
-            "created_at": r["created_at"],
-            "papers_count": len(state.get("papers", [])),
-            "claims_count": len(state.get("claims", [])),
-            "has_report": bool(state.get("research_brief")),
-        })
-
-    for r in fetch_persisted_history(exclude_ids=set(RESEARCH_RUNS.keys())):
-        state = r.get("latest_state") or {}
-        history.append({
-            "id": r["id"],
-            "question": r["question"],
-            "status": r["status"],
-            "depth": r["depth"],
-            "created_at": r["created_at"],
-            "papers_count": len(state.get("papers", [])),
-            "claims_count": len(state.get("claims", [])),
-            "has_report": bool(state.get("research_brief")),
-        })
+    history = [_history_row(r) for r in RESEARCH_RUNS.values()]
+    history += [_history_row(r) for r in fetch_persisted_history(exclude_ids=set(RESEARCH_RUNS.keys()))]
 
     history.sort(key=lambda h: h["created_at"], reverse=True)
     return {"history": history}
@@ -343,6 +372,37 @@ async def get_agent_inspector_data(run_id: str, agent_name: str):
     }
 
 
+@app.get("/api/datasets")
+async def list_datasets():
+    """
+    List files in WORKING_DIRECTORY — the same directory the agents' own file
+    tools (list_directory, etc.) read from. Read-only: this exposes what's
+    already there, it does not add an upload path.
+    """
+    from src.config import WORKING_DIRECTORY
+
+    base = os.path.abspath(WORKING_DIRECTORY)
+    datasets = []
+    if os.path.isdir(base):
+        for root, _dirs, files in os.walk(base):
+            for name in files:
+                if name.startswith("."):
+                    continue
+                full_path = os.path.join(root, name)
+                try:
+                    stat = os.stat(full_path)
+                except OSError:
+                    continue
+                datasets.append({
+                    "name": name,
+                    "path": os.path.relpath(full_path, base),
+                    "size_bytes": stat.st_size,
+                    "modified_at": datetime.utcfromtimestamp(stat.st_mtime).isoformat(),
+                })
+    datasets.sort(key=lambda d: d["modified_at"], reverse=True)
+    return {"working_directory": base, "datasets": datasets}
+
+
 @app.get("/api/settings")
 async def get_settings():
     return SETTINGS_STORE
@@ -356,6 +416,8 @@ async def update_settings(payload: UpdateSettingsRequest):
         SETTINGS_STORE["research_depth"] = payload.research_depth
     if payload.max_cost_usd is not None:
         SETTINGS_STORE["max_cost_usd"] = payload.max_cost_usd
+    if payload.max_verification_loops is not None:
+        SETTINGS_STORE["max_verification_loops"] = payload.max_verification_loops
     return SETTINGS_STORE
 
 

@@ -42,7 +42,8 @@ LANGCHAIN_PROJECT = "Multi-agent-DataAnalysis"
 LANGCHAIN_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 # MCP (Model Context Protocol) Settings (optional)
-# Tavily API key for web-search MCP server
+# Tavily API key — primary backend for the built-in web search tool (recommended).
+# Without it, search falls back to DuckDuckGo, then to a headless Google scrape.
 TAVILY_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # GitHub token for github MCP server
 GITHUB_TOKEN = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

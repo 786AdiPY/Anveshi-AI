@@ -6,7 +6,6 @@ from __future__ import annotations
 from typing import Any, List, TYPE_CHECKING
 
 from .base import BaseAgent
-from ..tools.basetool import list_directory
 from ..config import WORKING_DIRECTORY
 
 if TYPE_CHECKING:
@@ -35,7 +34,7 @@ class SupervisorAgent(BaseAgent):
         )
 
     def _get_tools(self) -> List:
-        return [list_directory]
+        return []
 
     def get_state_updates(self, state: "State", output: Any) -> dict[str, Any]:
         """

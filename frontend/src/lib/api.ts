@@ -98,14 +98,24 @@ export interface AgentInspectorData {
   contradictions_produced: Contradiction[];
 }
 
+export interface Dataset {
+  name: string;
+  path: string;
+  size_bytes: number;
+  modified_at: string;
+}
+
 export interface HistoryItem {
   id: string;
   question: string;
   status: RunStatus;
   depth: string;
   created_at: string;
+  runtime_seconds: number | null;
   papers_count: number;
   claims_count: number;
+  verified_count: number;
+  contradictions_count: number;
   has_report: boolean;
 }
 
@@ -129,5 +139,6 @@ export const api = {
   getGraph: (id: string) => req<{ nodes: unknown[]; edges: unknown[] }>(`/api/research/${id}/graph`),
   getAgentInspector: (id: string, agent: string) =>
     req<AgentInspectorData>(`/api/research/${id}/agents/${agent}`),
+  getDatasets: () => req<{ working_directory: string; datasets: Dataset[] }>("/api/datasets"),
   streamUrl: (id: string) => `${API_BASE}/api/research/${id}/stream`,
 };

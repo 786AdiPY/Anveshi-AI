@@ -119,7 +119,7 @@ class State(BaseModel):
     )
 
 
-def create_initial_state(user_input: str) -> dict[str, Any]:
+def create_initial_state(user_input: str, max_verification_loops: int = 3) -> dict[str, Any]:
     """
     Factory function to create the initial state dictionary for LangGraph.
     """
@@ -130,7 +130,7 @@ def create_initial_state(user_input: str) -> dict[str, Any]:
         "consecutive_errors": 0,
         "last_error": None,
         "verification_loop_count": 0,
-        "max_verification_loops": 3,
+        "max_verification_loops": max_verification_loops,
         "needs_more_research": False,
         "research_question": None,
         "papers": [],

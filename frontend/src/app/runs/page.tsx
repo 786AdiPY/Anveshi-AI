@@ -12,7 +12,7 @@ const TABS: { key: RunStatus | "all"; label: string }[] = [
   { key: "failed", label: "Failed" },
 ];
 
-export default function HistoryPage() {
+export default function ResearchRunsPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [tab, setTab] = useState<RunStatus | "all">("all");
   const [loading, setLoading] = useState(true);
@@ -30,7 +30,7 @@ export default function HistoryPage() {
 
   return (
     <main className="page-container">
-      <h1>Research History</h1>
+      <h1>Research Runs</h1>
 
       <div className="filter-tabs">
         {TABS.map((t) => (
@@ -47,7 +47,7 @@ export default function HistoryPage() {
       {offline && (
         <div className="notice-banner">
           <AlertCircle size={15} />
-          <span>API not reachable — start the backend to see your research history.</span>
+          <span>API not reachable — start the backend to see your research runs.</span>
         </div>
       )}
 

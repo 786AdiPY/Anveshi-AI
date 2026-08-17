@@ -1,5 +1,5 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { Loader2, CheckCircle2, XCircle, Circle } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Clock } from "lucide-react";
 
 export type AgentNodeStatus = "waiting" | "running" | "completed" | "failed";
 
@@ -11,10 +11,10 @@ export interface AgentNodeData {
 }
 
 const statusIcon: Record<AgentNodeStatus, React.ReactNode> = {
-  waiting: <Circle size={14} />,
-  running: <Loader2 size={14} className="spin" />,
-  completed: <CheckCircle2 size={14} />,
-  failed: <XCircle size={14} />,
+  waiting: <Clock size={13} className="node-icon node-icon-waiting" />,
+  running: <Loader2 size={13} className="spin node-icon node-icon-running" />,
+  completed: <CheckCircle2 size={13} className="node-icon node-icon-completed" />,
+  failed: <XCircle size={13} className="node-icon node-icon-failed" />,
 };
 
 export function AgentNode({ data }: NodeProps & { data: AgentNodeData }) {
@@ -23,10 +23,11 @@ export function AgentNode({ data }: NodeProps & { data: AgentNodeData }) {
       <Handle type="target" position={Position.Left} />
       <div className="agent-node-header">
         {statusIcon[data.status]}
-        <span>{data.label}</span>
+        <span className="agent-node-title">{data.label}</span>
       </div>
       {data.detail && <div className="agent-node-detail">{data.detail}</div>}
       <Handle type="source" position={Position.Right} />
     </div>
   );
 }
+

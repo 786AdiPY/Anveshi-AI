@@ -44,7 +44,7 @@ class ChallengerAgent(BaseAgent):
         )
 
     def _get_tools(self) -> List:
-        return [google_search, scrape_webpages, list_directory]
+        return [google_search, scrape_webpages]
 
     def get_state_updates(self, state: "State", output: Any) -> dict[str, Any]:
         """Parse Contradiction objects and any additional counter-evidence papers."""

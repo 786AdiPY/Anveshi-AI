@@ -8,7 +8,6 @@ from typing import Any, List, TYPE_CHECKING
 
 from .base import BaseAgent
 from ..tools.internet import google_search, scrape_webpages
-from ..tools.basetool import list_directory
 from ..config import WORKING_DIRECTORY
 
 try:
@@ -45,7 +44,7 @@ class LiteratureAgent(BaseAgent):
         )
 
     def _get_tools(self) -> List:
-        tools: List[Any] = [google_search, scrape_webpages, list_directory]
+        tools: List[Any] = [google_search, scrape_webpages]
         if _HAVE_COMMUNITY:
             try:
                 api_wrapper = WikipediaAPIWrapper(wiki_client=None)

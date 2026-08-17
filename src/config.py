@@ -18,6 +18,8 @@ WORKING_DIRECTORY = os.getenv('WORKING_DIRECTORY', './data')
 CONDA_ENV = os.getenv('CONDA_ENV', 'base')
 # Get ChromeDriver
 CHROMEDRIVER_PATH = os.getenv('CHROMEDRIVER_PATH', './chromedriver/chromedriver')
+# Tavily API key — primary backend for the web-search tool
+TAVILY_API_KEY = (os.getenv('TAVILY_API_KEY') or '').strip()
 # Get Config Directory
 CONFIG_DIRECTORY = os.getenv('CONFIG_DIRECTORY', 'config')
 

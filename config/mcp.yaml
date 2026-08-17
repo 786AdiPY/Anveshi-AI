@@ -22,6 +22,11 @@ servers:
       GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_TOKEN}
     description: GitHub repository access
 
-# Default servers enabled for all agents (can be overridden per-agent)
-defaults:
-  - filesystem
+# Default servers enabled for all agents (can be overridden per-agent).
+#
+# Empty by default: every server here is spawned with `npx`, and connecting
+# blocks agent construction for up to 60s per agent. The research agents
+# already have native file tools (create_document/read_document/list_directory),
+# so the filesystem server bought nothing but startup latency. Opt an agent in
+# by listing servers in config/agents/<agent>/config.yaml under `mcp_servers`.
+defaults: []

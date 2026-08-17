@@ -284,8 +284,12 @@ class BaseAgent(ABC):
         Returns:
             The agent's response (type may vary).
         """
-        # Pass max_iterations as recursion_limit in config
-        config = {"recursion_limit": self.max_iterations}
+        # max_iterations counts tool-calling rounds, but LangGraph counts graph
+        # super-steps: one round is a model step plus a tool step. Budget two
+        # steps per iteration (plus the final answer) so an agent that uses its
+        # full tool allowance still gets to reply instead of raising
+        # GraphRecursionError.
+        config = {"recursion_limit": self.max_iterations * 2 + 2}
         return self.agent.invoke(state, config=config)
 
     def _load_system_prompt(self) -> str:
