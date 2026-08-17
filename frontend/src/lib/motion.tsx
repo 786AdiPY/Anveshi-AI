@@ -17,12 +17,13 @@ const prefersReducedMotion = () =>
   window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 export function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(prefersReducedMotion);
+  const [reduced, setReduced] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
     if (!mq) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setReduced(mq.matches);
     const onChange = () => setReduced(mq.matches);
-    onChange();
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
@@ -30,7 +31,8 @@ export function useReducedMotion(): boolean {
 }
 
 /** [refCallback, inView] — inView latches true the first time the element
- * crosses the viewport threshold, then stops observing. */
+ * crosses the viewport threshold, then stops observing. Safely defers state
+ * updates to useEffect to avoid React SSR hydration mismatches. */
 export function useInView<T extends Element = HTMLDivElement>(
   options: IntersectionObserverInit = { threshold: 0.2, rootMargin: "0px 0px -8% 0px" },
 ): [(node: T | null) => void, boolean] {
@@ -38,13 +40,19 @@ export function useInView<T extends Element = HTMLDivElement>(
   const seen = useRef(false);
   const observer = useRef<IntersectionObserver | null>(null);
   const optionsRef = useRef(options);
+  const nodeRef = useRef<T | null>(null);
 
   const setRef = useCallback((node: T | null) => {
-    observer.current?.disconnect();
+    nodeRef.current = node;
+  }, []);
+
+  useEffect(() => {
+    const node = nodeRef.current;
     if (seen.current || !node) return;
 
     if (prefersReducedMotion() || typeof IntersectionObserver === "undefined") {
       seen.current = true;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInView(true);
       return;
     }
@@ -59,7 +67,12 @@ export function useInView<T extends Element = HTMLDivElement>(
         }
       }
     }, optionsRef.current);
+
     observer.current.observe(node);
+
+    return () => {
+      observer.current?.disconnect();
+    };
   }, []);
 
   return [setRef, inView];
@@ -247,7 +260,7 @@ export function CountUp({ to, from = 0, decimals = 0, duration = 1400, prefix = 
   useEffect(() => {
     if (!inView) return;
     if (prefersReducedMotion()) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reduced-motion bypass, not derived state
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setValue(to);
       return;
     }
@@ -289,7 +302,7 @@ export function useLinePlayback(total: number, stepMs = 260): [(n: HTMLElement |
   useEffect(() => {
     if (!inView) return;
     if (prefersReducedMotion()) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reduced-motion bypass, not derived state
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShown(total);
       return;
     }
