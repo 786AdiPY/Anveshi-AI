@@ -37,6 +37,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.get("/")
+async def root_health_check():
+    return {
+        "status": "ok",
+        "service": "Anveshi AI API",
+        "version": "1.0.0",
+        "docs": "/docs",
+    }
+
 from src.mock_data import MOCK_RESEARCH_RUNS
 
 # In-memory store for active and historical research runs, pre-populated with mock representation data

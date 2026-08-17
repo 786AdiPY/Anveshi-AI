@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
 
 export type ResearchDepth = "quick" | "standard" | "deep";
 export type VerificationStatus = "PASS" | "FAIL" | "UNCERTAIN" | "PENDING";
