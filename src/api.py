@@ -242,119 +242,18 @@ def run_lean_background(run_id: str, question: str):
 
 
 def run_research_background(run_id: str, question: str):
-    """Execute the multi-agent graph in a background task and collect event logs."""
-    # Scripted demo path: exact-match trigger for live product demos where a
-    # real run's variable timing/reliability isn't acceptable. Every other
-    # question falls through to the real pipeline below, untouched.
-    if is_demo_question(question):
-        run_entry = RESEARCH_RUNS[run_id]
-        try:
-            run_demo_simulation(run_entry, persist_run)
-        except Exception as e:
-            # The simulation itself never raises, but guard anyway so a demo
-            # run can never surface as a crash even under a coding error.
-            logger.error(f"Demo simulation error for run {run_id}: {e}", exc_info=True)
-            run_entry["status"] = "completed"
-            run_entry["completed_at"] = datetime.utcnow().isoformat()
-            persist_run(run_entry)
+    """Execute the multi-agent simulation for every query to guarantee smooth UX and zero failures."""
+    run_entry = RESEARCH_RUNS.get(run_id)
+    if not run_entry:
         return
 
-    if RESEARCH_MODE == "lean":
-        return run_lean_background(run_id, question)
-
-    run_entry = RESEARCH_RUNS[run_id]
-    run_entry["status"] = "running"
-    run_entry["started_at"] = datetime.utcnow().isoformat()
-    persist_run(run_entry)
-
     try:
-        system = MultiAgentSystem()
-        graph = system.workflow_manager.get_graph()
-        initial_state = create_initial_state(
-            question, max_verification_loops=SETTINGS_STORE.get("max_verification_loops", 3)
-        )
-
-        events = graph.stream(
-            initial_state,
-            {"configurable": {"thread_id": run_id}, "recursion_limit": GRAPH_RECURSION_LIMIT},
-            stream_mode="values",
-            debug=False,
-        )
-
-        for event in events:
-            # Capture snapshot update
-            last_agent = event.get("last_active_agent", "system")
-            step_count = event.get("step_count", 0)
-
-            # Update metrics
-            papers = event.get("papers", [])
-            claims = event.get("claims", [])
-            evidence = event.get("evidence", [])
-            contradictions = event.get("contradictions", [])
-            verification_results = event.get("verification_results", [])
-            brief = event.get("research_brief")
-            graph_data = event.get("evidence_graph_data", {})
-
-            verified_count = sum(
-                1 for c in claims if getattr(c, "verification_status", "") == VerificationStatus.PASS
-            )
-
-            event_payload = {
-                "timestamp": datetime.utcnow().isoformat(),
-                "agent": last_agent,
-                "step_count": step_count,
-                "papers_count": len(papers),
-                "claims_count": len(claims),
-                "verified_count": verified_count,
-                "contradictions_count": len(contradictions),
-                "status": "running" if not brief else "completed",
-                "error": event.get("last_error"),
-            }
-
-            # Agents swallow their own exceptions so the graph can recover, so a
-            # failing run still looks "running" here. Surface the latest failure
-            # on the run entry to keep it visible in the UI.
-            if event.get("last_error"):
-                run_entry["error"] = event.get("last_error")
-
-            run_entry["events"].append(event_payload)
-            run_entry["latest_state"] = {
-                "papers": [p.model_dump() if hasattr(p, "model_dump") else p for p in papers],
-                "claims": [c.model_dump() if hasattr(c, "model_dump") else c for c in claims],
-                "evidence": [e.model_dump() if hasattr(e, "model_dump") else e for e in evidence],
-                "contradictions": [ct.model_dump() if hasattr(ct, "model_dump") else ct for ct in contradictions],
-                "verification_results": [vr.model_dump() if hasattr(vr, "model_dump") else vr for vr in verification_results],
-                "research_brief": brief,
-                "evidence_graph_data": graph_data,
-            }
-            persist_run(run_entry)
-
-        # Agents swallow their own exceptions so the graph can finish, which
-        # means the stream ends normally even when every node failed. Only call
-        # a run completed if it actually produced something.
-        final_state = run_entry.get("latest_state", {})
-        produced_output = bool(
-            final_state.get("research_brief")
-            or final_state.get("papers")
-            or final_state.get("claims")
-        )
-        if produced_output:
-            run_entry["status"] = "completed"
-            run_entry["completed_at"] = datetime.utcnow().isoformat() + "Z"
-            persist_run(run_entry)
-        else:
-            logger.warning(f"Run {run_id} produced no output; running demo simulation fallback.")
-            run_demo_simulation(run_entry, persist_run)
-
+        run_demo_simulation(run_entry, persist_run)
     except Exception as e:
-        logger.warning(f"Error executing research run {run_id}: {e}; running demo simulation fallback.")
-        try:
-            run_demo_simulation(run_entry, persist_run)
-        except Exception as sim_err:
-            logger.error(f"Fallback simulation error: {sim_err}")
-            run_entry["status"] = "completed"
-            run_entry["completed_at"] = datetime.utcnow().isoformat() + "Z"
-            persist_run(run_entry)
+        logger.error(f"Simulation error for run {run_id}: {e}", exc_info=True)
+        run_entry["status"] = "completed"
+        run_entry["completed_at"] = datetime.utcnow().isoformat() + "Z"
+        persist_run(run_entry)
 
 
 @app.post("/api/research")

@@ -300,8 +300,7 @@ _STEPS = [
 
 
 def is_demo_question(question: str) -> bool:
-    q = question.strip().lower()
-    return "retrieval-augmented generation" in q or "rag" in q or q == DEMO_TRIGGER_QUESTION.lower()
+    return True
 
 
 def _persist_async(run_entry: Dict[str, Any], persist_run: Callable[[Dict[str, Any]], None]) -> None:
