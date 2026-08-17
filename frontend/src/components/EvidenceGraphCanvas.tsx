@@ -311,22 +311,22 @@ function CanvasInner({
   const claims = nodesData.filter((n) => n.type === "claim");
 
   return (
-    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+    <div style={{ width: "100%", height: "540px", minHeight: "540px", position: "relative", borderRadius: "12px", overflow: "hidden", background: "#090b10", border: "1px solid var(--border-color)" }}>
       {/* Top Legend & Layout Direction Controls Toolbar */}
-      <div className="graph-toolbar flex items-center justify-between px-4 py-2 bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800 text-xs">
-        <div className="flex items-center gap-4">
+      <div className="graph-toolbar">
+        <div className="graph-toolbar-legend">
           {LEGEND.map(({ label, color }) => (
-            <span key={label} className="flex items-center gap-1.5 text-zinc-400 font-medium">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
+            <span key={label} className="graph-legend-item">
+              <span className="graph-legend-dot" style={{ backgroundColor: color }} />
               {label}
             </span>
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="graph-toolbar-controls">
           <button
             onClick={() => setLayoutDirection((prev) => (prev === "TB" ? "LR" : "TB"))}
-            className="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors font-medium text-[11px] flex items-center gap-1"
+            className="graph-layout-toggle-btn"
             title="Toggle Top-to-Bottom / Left-to-Right layout"
           >
             <span>Layout: {layoutDirection === "TB" ? "Vertical (TB)" : "Horizontal (LR)"}</span>
