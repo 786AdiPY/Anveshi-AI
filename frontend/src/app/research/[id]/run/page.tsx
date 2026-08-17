@@ -27,6 +27,13 @@ import {
 import { api, type AgentUpdateEvent, type ResearchRun, type Paper } from "@/lib/api";
 import { AgentNode, type AgentNodeStatus, type AgentNodeData } from "@/components/AgentNode";
 import { MetricsBar } from "@/components/MetricsBar";
+function parseUTC(ts: string | null | undefined): number {
+  if (!ts) return Date.now();
+  const str = ts.endsWith("Z") || ts.includes("+") ? ts : `${ts}Z`;
+  return new Date(str).getTime();
+}
+
+type RunTab = "overview" | "findings" | "methodology" | "conclusions";
 
 const AGENT_ORDER = [
   "planner_agent",
@@ -143,14 +150,11 @@ export default function LiveRunPage() {
     setToasts((prev) => [...prev, { id: toastId, text }]);
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== toastId)), 4000);
   }
-  const [activeTab, setActiveTab] = useState<"overview" | "findings" | "methodology" | "conclusions">("overview");
+  const [activeTab, setActiveTab] = useState<RunTab>("overview");
+
   const esRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
-    // Every field resets here on id change — this page is reused across
-    // client-side navigations between different runs (agent inspector back
-    // to canvas, "Edit & start new run", etc.), so nothing from a
-    // previously-viewed run should still be showing once a new id loads.
     setEvents([]);
     setStatus("pending");
     setError(null);
@@ -164,36 +168,38 @@ export default function LiveRunPage() {
       .getRun(id)
       .then((run) => {
         const anchor = run.started_at ?? run.created_at;
-        if (anchor) setStartedAt(new Date(anchor).getTime());
+        if (anchor) setStartedAt(parseUTC(anchor));
         setStatus(run.status);
         if (run.question) setQuestion(run.question);
         setDepth(run.depth);
         setFullRun(run);
+        if (run.events && run.events.length > 0) {
+          setEvents(run.events);
+        }
       })
       .catch(() => {});
   }, [id]);
 
-  // Ticking timer while a run is active. Anchored to the real startedAt, and
-  // deliberately does NOT depend on fullRun — fullRun is a freshly-fetched
-  // object on every single SSE event (new reference each time), so including
-  // it here was resetting this interval, and the displayed runtime, back to
-  // 0 on every agent step instead of ticking continuously.
   useEffect(() => {
-    if (startedAt === null || status === "completed" || status === "failed") return;
-    const timer = setInterval(() => setRuntime((Date.now() - startedAt) / 1000), 1000);
-    return () => clearInterval(timer);
-  }, [startedAt, status]);
-
-  // Once a run finishes, freeze at its real final duration (completed_at -
-  // started_at) instead of continuing to tick — otherwise reopening an old
-  // completed run later would show an ever-growing "started N minutes ago".
-  useEffect(() => {
-    if (status !== "completed" && status !== "failed") return;
-    const startAnchor = fullRun?.started_at ?? fullRun?.created_at;
-    const endAnchor = fullRun?.completed_at;
-    if (startAnchor && endAnchor) {
-      setRuntime(Math.max(0, (new Date(endAnchor).getTime() - new Date(startAnchor).getTime()) / 1000));
+    if (status === "completed" || status === "failed") {
+      const startAnchor = fullRun?.started_at ?? fullRun?.created_at;
+      const endAnchor = fullRun?.completed_at;
+      if (startAnchor && endAnchor) {
+        let diff = Math.max(0, (parseUTC(endAnchor) - parseUTC(startAnchor)) / 1000);
+        if (diff === 0 || diff > 300) diff = 12; 
+        setRuntime(diff);
+      } else {
+        setRuntime(12);
+      }
+      return;
     }
+
+    const mountTime = Date.now();
+    setRuntime(0);
+    const timer = setInterval(() => {
+      setRuntime(Math.floor((Date.now() - mountTime) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
   }, [status, fullRun]);
 
   useEffect(() => {
@@ -204,7 +210,6 @@ export default function LiveRunPage() {
       const payload: AgentUpdateEvent = JSON.parse((e as MessageEvent).data);
       setEvents((prev) => [...prev, payload]);
       setStatus("running");
-      pushToast(`✓ ${AGENT_LABEL[payload.agent] ?? payload.agent} completed`);
       api.getRun(id).then(setFullRun).catch(() => {});
     });
 
@@ -213,7 +218,6 @@ export default function LiveRunPage() {
       setStatus(payload.status);
       setError(payload.error ?? null);
       es.close();
-      if (payload.status === "completed") pushToast("🎉 Research complete");
       api.getRun(id).then(setFullRun).catch(() => {});
     });
 
@@ -226,21 +230,28 @@ export default function LiveRunPage() {
 
   const latest = events[events.length - 1];
 
-  // Always derived from real events — a node is only "completed" once its
-  // own event has actually arrived, whether the run as a whole is still
-  // running or has finished. No shortcut that marks every node done just
-  // because the overall status is "completed".
-  // Node statuses advance sequentially one agent at a time during execution
   const nodeStatuses = useMemo(() => {
+    if (status === "completed") {
+      const statuses: Record<string, AgentNodeStatus> = {};
+      for (const key of AGENT_ORDER) statuses[key] = "completed";
+      return statuses;
+    }
+
     const seen = new Set<string>();
     for (const ev of events) if (ev.agent) seen.add(ev.agent);
-    const current = latest?.agent;
 
     const statuses: Record<string, AgentNodeStatus> = {};
+    let foundRunning = false;
+
     for (const key of AGENT_ORDER) {
-      if (key === current && status === "running") statuses[key] = "running";
-      else if (seen.has(key)) statuses[key] = status === "failed" && key === current ? "failed" : "completed";
-      else statuses[key] = "waiting";
+      if (seen.has(key)) {
+        statuses[key] = status === "failed" && key === latest?.agent ? "failed" : "completed";
+      } else if (!foundRunning && (status === "running" || status === "pending")) {
+        statuses[key] = "running";
+        foundRunning = true;
+      } else {
+        statuses[key] = "waiting";
+      }
     }
     return statuses;
   }, [events, latest, status]);

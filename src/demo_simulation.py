@@ -284,19 +284,17 @@ _GRAPH_DATA = {
     ],
 }
 
-# Each step: (agent, delay_seconds_before_emitting, papers/claims/verified/contradictions counts so far)
-# Counts grow monotonically toward the final totals (4 papers, 5 claims, 4 verified, 1 contradiction)
-# so the metrics bar and canvas fill in progressively rather than jumping straight to final values.
+# Ultra-fast snappy simulation (~12 seconds total):
 _STEPS = [
-    ("planner_agent", 6, 0, 0, 0, 0),
-    ("supervisor_agent", 3, 0, 0, 0, 0),
-    ("literature_agent", 14, 4, 0, 0, 0),
-    ("extractor_agent", 10, 4, 5, 0, 0),
-    ("challenger_agent", 9, 4, 5, 0, 1),
-    ("ledger_agent", 3, 4, 5, 0, 1),
-    ("verifier_agent", 8, 4, 5, 4, 1),
-    ("synthesizer_agent", 10, 4, 5, 4, 1),
-    ("evidence_graph_agent", 4, 4, 5, 4, 1),
+    ("planner_agent", 1, 0, 0, 0, 0),
+    ("supervisor_agent", 1, 0, 0, 0, 0),
+    ("literature_agent", 2, 4, 0, 0, 0),
+    ("extractor_agent", 1, 4, 5, 0, 0),
+    ("challenger_agent", 2, 4, 5, 0, 1),
+    ("ledger_agent", 1, 4, 5, 0, 1),
+    ("verifier_agent", 1, 4, 5, 4, 1),
+    ("synthesizer_agent", 2, 4, 5, 4, 1),
+    ("evidence_graph_agent", 1, 4, 5, 4, 1),
 ]
 
 
@@ -331,7 +329,7 @@ def run_demo_simulation(
     """
     started_at = datetime.utcnow()
     run_entry["status"] = "running"
-    run_entry["started_at"] = started_at.isoformat()
+    run_entry["started_at"] = started_at.isoformat() + "Z"
     _persist_async(run_entry, persist_run)
 
     # Event timestamps are computed from started_at + the *scripted* cumulative
@@ -348,7 +346,7 @@ def run_demo_simulation(
 
         is_last = agent == "evidence_graph_agent"
         event_payload = {
-            "timestamp": (started_at + elapsed).isoformat(),
+            "timestamp": (started_at + elapsed).isoformat() + "Z",
             "agent": agent,
             "step_count": len(run_entry["events"]) + 1,
             "papers_count": papers_so_far,
@@ -371,5 +369,5 @@ def run_demo_simulation(
         _persist_async(run_entry, persist_run)
 
     run_entry["status"] = "completed"
-    run_entry["completed_at"] = (started_at + elapsed).isoformat()
+    run_entry["completed_at"] = (started_at + elapsed).isoformat() + "Z"
     _persist_async(run_entry, persist_run)
