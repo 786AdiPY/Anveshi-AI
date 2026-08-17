@@ -5,8 +5,10 @@ import urllib.request
 
 from langchain_core.tools import tool
 from langchain_community.document_loaders import WebBaseLoader, FireCrawlLoader
-# fastCRW (Firecrawl-compatible web scraper; single binary, self-host or cloud)
-from langchain_crw import CrwLoader
+try:
+    from langchain_crw import CrwLoader
+except ImportError:
+    CrwLoader = None
 from typing import Annotated, List
 from bs4 import BeautifulSoup
 
@@ -251,9 +253,9 @@ def _crw_scrape_webpages(urls: Annotated[List[str], "List of URLs to scrape"]) -
     Scrape the provided web pages for detailed information using fastCRW.
 
     fastCRW is a Firecrawl-compatible web scraper (single binary; self-host or cloud).
-    This function uses the CrwLoader to load and scrape the content of the provided URLs.
-
     """
+    if CrwLoader is None:
+        raise ValueError("langchain_crw package is not installed")
     try:
         logger.info(f"Scraping webpages using fastCRW: {urls}")
         results = []

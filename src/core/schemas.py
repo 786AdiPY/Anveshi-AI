@@ -215,3 +215,13 @@ class ExecutionTrace(BaseModel):
     total_cost_usd: float = Field(default=0.0)
     total_duration_seconds: float = Field(default=0.0)
     loop_count: int = Field(default=0)
+
+
+class ArtifactSchema(BaseModel):
+    """Schema for artifact outputs produced by agents."""
+    id: str = Field(default_factory=_uuid)
+    name: str = Field(default="artifact")
+    type: str = Field(default="text")
+    content: str = Field(default="")
+    created_at: str = Field(default_factory=_now)
+
