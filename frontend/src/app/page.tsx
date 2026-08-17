@@ -28,7 +28,7 @@ import "./landing.css";
 
 const CHAPTERS = [
   { id: "problem", label: "The problem" },
-  { id: "pipeline", label: "The pipeline" },
+  { id: "agents", label: "Agents" },
   { id: "gate", label: "The gate" },
   { id: "graph", label: "Evidence graph" },
   { id: "platform", label: "Platform" },
@@ -84,7 +84,7 @@ function Nav() {
       </a>
       <nav className="lp-nav__links" aria-label="Sections">
         <a href="#problem">Problem</a>
-        <a href="#pipeline">Pipeline</a>
+        <a href="#agents">Agents</a>
         <a href="#gate">Gate</a>
         <a href="#platform">Platform</a>
       </nav>
@@ -130,9 +130,13 @@ function ChapterRail() {
     <nav className="lp-chapters" aria-label="Chapters">
       <ol>
         {CHAPTERS.map((c, i) => (
-          <li key={c.id} className={active === c.id ? "is-active" : ""}>
-            <a href={`#${c.id}`}>
-              <span className="lp-chapters__n">{String(i + 1).padStart(2, "0")}</span>
+          <li key={c.id}>
+            <a
+              href={`#${c.id}`}
+              className={active === c.id ? "is-active" : ""}
+              aria-current={active === c.id ? "location" : undefined}
+            >
+              <span className="lp-chapters__n lp-mono">{String(i + 1).padStart(2, "0")}</span>
               <span className="lp-chapters__l">{c.label}</span>
             </a>
           </li>
@@ -144,141 +148,117 @@ function ChapterRail() {
 
 // ── hero ─────────────────────────────────────────────────────────────────────
 function Hero() {
-  const cta = useMagnetic<HTMLAnchorElement>(0.22);
+  const reduced = useReducedMotion();
+  const tiltRef = useTilt3D<HTMLDivElement>(reduced ? 0 : 7);
 
   return (
     <section className="lp-hero">
-      <div className="lp-hero__inner">
-        <p className="lp-eyebrow">
-          <span className="lp-eyebrow__dot" aria-hidden="true" />
-          Multi-agent research — planned, challenged, verified
-        </p>
+      <div className="lp-wrap">
+        <Reveal className="lp-hero__eyebrow">
+          <span className="lp-dot" aria-hidden="true" />
+          Multi-agent evidence verification for deep research
+        </Reveal>
 
-        <h1 className="lp-display">
-          <RevealWords as="span" className="lp-display__line" text="Answers you can trace." />
+        <h1 className="lp-hero__title">
+          <RevealWords text="Answers you can" as="span" className="lp-hero__line" />
           <RevealWords
+            text="actually prove."
             as="span"
-            className="lp-display__line lp-display__line--em"
-            text="Not just answers."
-            start={3}
+            className="lp-hero__line lp-hero__line--em"
+            start={2}
           />
         </h1>
 
-        <Reveal className="lp-hero__lead" delay={4}>
-          <p>
-            Anveshi AI plans a research question, finds the literature, and extracts claims —
-            then turns an adversarial agent loose on its own findings. Nothing reaches your
-            report until the Verifier can trace it back to a real source.
-          </p>
+        <Reveal as="p" className="lp-hero__body" delay={2}>
+          Anveshi AI coordinates specialized agents to search literature, extract claims, hunt for
+          counter-evidence, and enforce strict verification gates — so every sentence in your
+          brief traces directly back to source text.
         </Reveal>
 
-        <Reveal className="lp-hero__actions" delay={5}>
-          <Link ref={cta} href="/dashboard" className="lp-btn lp-btn--solid">
-            Open the console
+        <Reveal className="lp-hero__cta-row" delay={3}>
+          <Link href="/dashboard" className="lp-btn lp-btn--primary">
+            Start a research run
             <Arrow />
           </Link>
-          <a href="#pipeline" className="lp-btn lp-btn--ghost">
-            See how it works
+          <a href="#agents" className="lp-btn lp-btn--ghost">
+            Explore the 9 agents
           </a>
         </Reveal>
 
-        <Reveal className="lp-spec" delay={6}>
-          <SpecItem k="Sources" v="Academic papers · preprints · web · your files" />
-          <SpecItem k="Agents" v="9, LangGraph-orchestrated" />
-          <SpecItem k="Gate" v="PASS · FAIL · UNCERTAIN" />
-          <SpecItem k="Ledger" v="Full execution trace, cost tracked" />
+        <Reveal className="lp-hero__stage" delay={4}>
+          <div className="lp-card-stage" ref={tiltRef}>
+            <div className="lp-card-stage__glow" aria-hidden="true" />
+            <div className="lp-card-stage__card">
+              <div className="lp-card-stage__head">
+                <span className="lp-card-stage__status">
+                  <i className="lp-dot lp-dot--live" /> VERIFYING CLAIM 14/22
+                </span>
+                <span className="lp-mono lp-card-stage__id">RUN #8F2A</span>
+              </div>
+              <p className="lp-card-stage__query">
+                &ldquo;Does early time-restricted feeding improve insulin sensitivity independent of
+                weight loss?&rdquo;
+              </p>
+              <div className="lp-card-stage__split">
+                <div className="lp-card-stage__claim">
+                  <span className="lp-mono lp-card-stage__tag">EXTRACTED CLAIM</span>
+                  <p>
+                    &ldquo;eTRF improved insulin sensitivity by 24% (p=0.01) without significant
+                    changes in body mass.&rdquo;
+                  </p>
+                </div>
+                <div className="lp-card-stage__verdict">
+                  <span className="lp-mono lp-card-stage__tag lp-card-stage__tag--pass">
+                    VERIFIED · 98% FIDELITY
+                  </span>
+                  <p>
+                    Matched to <i>Sutton et al., Cell Metabolism 2018</i>, p.461, par. 3.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </Reveal>
       </div>
-
-      <Reveal className="lp-hero__figure" delay={4}>
-        <HeroFigure />
-      </Reveal>
     </section>
   );
 }
 
-function SpecItem({ k, v }: { k: string; v: string }) {
-  return (
-    <div className="lp-spec__item">
-      <dt>{k}</dt>
-      <dd>{v}</dd>
-    </div>
-  );
-}
-
-/** A claim card showing what the Verifier actually gates: how many claims
- * survive a first pass, versus after the Challenger's counter-search. */
-function HeroFigure() {
-  const tilt = useTilt3D<HTMLDivElement>(10);
-
-  return (
-    <div className="lp-float">
-      <div className="lp-fig3d" ref={tilt}>
-        <figure className="lp-fig">
-          <span className="lp-fig__glare" aria-hidden="true" />
-
-          <figcaption className="lp-fig__head" data-depth="3">
-            <span className="lp-mono">claim_07 · verifier</span>
-            <span className="lp-tag lp-tag--pass">Gate passed</span>
-          </figcaption>
-
-          <div className="lp-fig__row" data-depth="2">
-            <span className="lp-fig__k">First pass</span>
-            <div className="lp-fig__track">
-              <div className="lp-fig__bar" style={{ width: "67%" }} />
-            </div>
-            <span className="lp-fig__v lp-mono">4 / 6</span>
-          </div>
-
-          <div className="lp-fig__row" data-depth="2">
-            <span className="lp-fig__k">After Challenger</span>
-            <div className="lp-fig__track">
-              <div className="lp-fig__bar lp-fig__bar--accent" style={{ width: "100%" }} />
-            </div>
-            <span className="lp-fig__v lp-mono">6 / 6</span>
-          </div>
-
-          <div className="lp-fig__foot" data-depth="4">
-            <div>
-              <span className="lp-fig__big lp-mono">3×</span>
-              <span className="lp-fig__lbl">max re-investigation loops</span>
-            </div>
-            <div>
-              <span className="lp-fig__big lp-mono">0</span>
-              <span className="lp-fig__lbl">unverified claims shipped</span>
-            </div>
-          </div>
-        </figure>
-      </div>
-    </div>
-  );
-}
-
-// ── source ticker ─────────────────────────────────────────────────────────────
-const MARQUEE = [
-  "arXiv",
-  "Tavily",
-  "Wikipedia",
-  "Firecrawl",
-  "GitHub",
-  "LangGraph",
-  "LangChain",
-  "Model Context Protocol",
+// ── ticker ───────────────────────────────────────────────────────────────────
+const PROOFS = [
+  "Zero hallucinated citations",
+  "Adversarial counter-evidence hunting",
+  "Automated claim deduplication",
+  "Dagre Directed Evidence Graphs",
+  "Exportable PDF & Markdown reports",
+  "Human-in-the-loop plan review",
 ];
 
 function Ticker() {
+  const reduced = useReducedMotion();
+  if (reduced) {
+    return (
+      <div className="lp-ticker lp-ticker--static" aria-label="Key features">
+        <div className="lp-wrap lp-ticker__static-wrap">
+          {PROOFS.map((p) => (
+            <span key={p} className="lp-ticker__item">
+              <i className="lp-dot" aria-hidden="true" />
+              {p}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="lp-ticker" aria-hidden="true">
       <div className="lp-ticker__track">
-        {[0, 1].map((copy) => (
-          <div className="lp-ticker__group" key={copy}>
-            {MARQUEE.map((m) => (
-              <span key={`${copy}-${m}`} className="lp-ticker__item">
-                {m}
-                <i />
-              </span>
-            ))}
-          </div>
+        {[...PROOFS, ...PROOFS].map((p, i) => (
+          <span key={`${p}-${i}`} className="lp-ticker__item">
+            <i className="lp-dot" />
+            {p}
+          </span>
         ))}
       </div>
     </div>
@@ -334,55 +314,61 @@ function SectionLabel({ n, t }: { n: string; t: string }) {
   );
 }
 
-// ── 02 pipeline — scroll-pinned horizontal ───────────────────────────────────
+// ── 02 agents — scroll-pinned horizontal ───────────────────────────────────
 const STAGES = [
   {
     k: "Planner",
     t: "Turn a question into an investigation.",
-    d: "The research question is decomposed into subquestions, initial hypotheses, and the search queries needed to start finding sources — no per-topic prompt engineering required.",
-    m: "subquestions · search queries",
+    d: "Decomposes the research question into targeted subquestions, initial hypotheses, and exact web search queries — zero prompt engineering required.",
+    m: "subquestions · hypotheses · queries",
   },
   {
     k: "Supervisor",
     t: "Decide what happens next.",
-    d: "The orchestrator reads the current research state and routes to whichever agent it actually needs — more sources, more extraction, more scrutiny, or the final write-up. Verification failures route back here, not to someone's inbox.",
-    m: "state → next agent",
+    d: "Orchestrates execution state and dynamically routes work to literature search, claim extraction, verification, or final synthesis. Verification failures route back here automatically.",
+    m: "state → dynamic agent routing",
   },
   {
     k: "Literature",
     t: "Go find what's actually out there.",
-    d: "Discovers academic papers, preprints, and web sources for every subquestion, prioritizing peer-reviewed work and arXiv over generic search results.",
-    m: "papers · preprints · web",
+    d: "Discovers peer-reviewed academic papers, preprints, and web sources for every subquestion using Tavily search and fastCRW scraping.",
+    m: "papers · preprints · web sources",
   },
   {
     k: "Extractor",
     t: "Pull out claims that can be checked.",
-    d: "Reads the discovered sources and extracts specific, falsifiable claims paired with their supporting evidence excerpts — not summaries, sentences a reader could verify.",
-    m: "claim + excerpt pairs",
+    d: "Reads raw source text and extracts specific, falsifiable claims paired with verbatim supporting excerpts — not vague summaries.",
+    m: "claim + verbatim excerpt pairs",
   },
   {
     k: "Challenger",
-    t: "Argue with your own findings.",
-    d: "An adversarial pass searches specifically for opposing results, failed replications, and methodological criticism of every claim already on the ledger — before a user ever sees it.",
-    m: "counter-evidence",
+    t: "Actively seek counter-evidence.",
+    d: "Executes an adversarial pass to specifically search for opposing studies, failed replications, and methodological flaws across all claims.",
+    m: "counter-evidence · anti-bias pass",
+  },
+  {
+    k: "Ledger",
+    t: "Maintain ground-truth state.",
+    d: "Logs all extracted claim-evidence pairs into a structured ledger with deduplication, confidence scores, and source provenance tracking.",
+    m: "claims ledger · provenance log",
   },
   {
     k: "Verifier",
     t: "Check it, or send it back.",
-    d: "Every claim is checked against its source: does it exist, does it say what's claimed, is the excerpt relevant, is it overgeneralized. Anything that fails routes back to the Supervisor — up to three times.",
-    m: "PASS · FAIL · UNCERTAIN",
+    d: "Evaluates claim fidelity against cited source texts: flags hallucinated citations, checks relevance, and routes failing work back to the Supervisor.",
+    m: "PASS · FAIL · UNCERTAIN gates",
   },
   {
     k: "Synthesizer",
     t: "Write only what survived.",
-    d: "Compiles the research brief from verified claims alone — citing sources, surfacing contradictions, and naming the questions the evidence couldn't settle instead of papering over them.",
-    m: "brief · citations · gaps",
+    d: "Synthesizes the final research brief strictly from verified claims — inserting citations, highlighting contradictions, and surfacing research gaps.",
+    m: "research brief · citations · gaps",
   },
   {
     k: "Evidence Graph",
     t: "Make the trail visible.",
-    d: "Every claim, its evidence, its source paper, and any contradiction found along the way is mapped into a graph you can open — so “trust me” is never the only option.",
-    m: "claim → evidence → source",
+    d: "Constructs a directed top-down DAG tree mapping research question -> verified claims -> source papers with Dagre Sugiyama topology.",
+    m: "question → claims → source papers",
   },
 ];
 
@@ -419,14 +405,14 @@ function Pipeline() {
   return (
     <section
       className={`lp-pin ${reduced ? "is-static" : ""}`}
-      id="pipeline"
+      id="agents"
       ref={progressRef}
       style={overflow ? { height: `calc(100vh + ${overflow}px)` } : undefined}
     >
       <div className="lp-pin__stage">
         <div className="lp-wrap lp-pin__head">
-          <SectionLabel n="02" t="The pipeline" />
-          <h2 className="lp-h2 lp-h2--tight">Eight stages, every one of them auditable.</h2>
+          <SectionLabel n="02" t="The Agents" />
+          <h2 className="lp-h2 lp-h2--tight">Nine specialized agents, every single one auditable.</h2>
           <div className="lp-pin__meter" aria-hidden="true">
             <div className="lp-pin__meter-fill" style={{ transform: `scaleX(${p})` }} />
           </div>
