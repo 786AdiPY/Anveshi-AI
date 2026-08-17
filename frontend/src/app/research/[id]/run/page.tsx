@@ -79,7 +79,7 @@ export default function LiveRunPage() {
   // user navigates to an agent inspector and back, and a mount-time clock
   // would restart the timer on every visit instead of tracking the real run.
   const [startedAt, setStartedAt] = useState<number | null>(null);
-  const [, setTick] = useState(0);
+  const [runtime, setRuntime] = useState(0);
   const [question, setQuestion] = useState<string | null>(null);
   const [depth, setDepth] = useState("standard");
   const esRef = useRef<EventSource | null>(null);
@@ -99,15 +99,12 @@ export default function LiveRunPage() {
 
   useEffect(() => {
     if (startedAt === null) return;
-    const timer = setInterval(() => setTick((t) => t + 1), 1000);
+    // Date.now() can't be called during render (React's purity rule) or
+    // synchronously in an effect body (cascading-render rule) — only inside
+    // this interval callback, which fires after the effect has committed.
+    const timer = setInterval(() => setRuntime((Date.now() - startedAt) / 1000), 1000);
     return () => clearInterval(timer);
   }, [startedAt]);
-
-  // tick only forces a re-render each second; the actual value is always
-  // computed fresh from the wall clock so it's correct immediately, not just
-  // after the first interval fires.
-  const runtime = startedAt !== null ? (Date.now() - startedAt) / 1000 : 0;
-  void tick;
 
   useEffect(() => {
     const es = new EventSource(api.streamUrl(id));
