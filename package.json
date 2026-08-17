@@ -7,6 +7,6 @@
     "dev": "cd frontend && npm run dev"
   },
   "dependencies": {
-    "next": "^15.1.6"
+    "next": "^16.3.1"
   }
 }
