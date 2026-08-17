@@ -20,6 +20,10 @@ CONDA_ENV = os.getenv('CONDA_ENV', 'base')
 CHROMEDRIVER_PATH = os.getenv('CHROMEDRIVER_PATH', './chromedriver/chromedriver')
 # Tavily API key — primary backend for the web-search tool
 TAVILY_API_KEY = (os.getenv('TAVILY_API_KEY') or '').strip()
+# Global provider/model override for every agent (see AgentModelsConfig).
+# Example: LLM_PROVIDER=groq, LLM_MODEL=llama-3.3-70b-versatile
+LLM_PROVIDER_OVERRIDE = (os.getenv('LLM_PROVIDER') or '').strip()
+LLM_MODEL_OVERRIDE = (os.getenv('LLM_MODEL') or '').strip()
 # Get Config Directory
 CONFIG_DIRECTORY = os.getenv('CONFIG_DIRECTORY', 'config')
 
@@ -61,12 +65,18 @@ class AgentModelsConfig:
     def get_provider(self, agent_name: str):
         """Get the provider for a specific agent.
 
+        LLM_PROVIDER in the environment overrides every agent's provider, so the
+        whole pipeline can be pointed at another vendor (a free Groq or Gemini
+        tier, a local Ollama) without rewriting this file.
+
         Args:
             agent_name: Name of the agent.
 
         Returns:
             Provider name or None if not found.
         """
+        if LLM_PROVIDER_OVERRIDE:
+            return LLM_PROVIDER_OVERRIDE
         agent_config = self.get_agent_config(agent_name)
         return agent_config.get('provider')
 
@@ -80,7 +90,12 @@ class AgentModelsConfig:
             Model configuration dictionary or empty dict if not found.
         """
         agent_config = self.get_agent_config(agent_name)
-        return agent_config.get('model_config', {})
+        model_config = dict(agent_config.get('model_config', {}))
+        # LLM_MODEL pairs with LLM_PROVIDER: the per-agent temperature and token
+        # caps still apply, only the model id is swapped.
+        if LLM_MODEL_OVERRIDE:
+            model_config['model'] = LLM_MODEL_OVERRIDE
+        return model_config
 
 
 # Create global instance

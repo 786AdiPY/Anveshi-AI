@@ -26,14 +26,24 @@ CRW_API_URL = https://fastcrw.com/api
 # OpenAI API key (optional)
 OPENAI_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+# Global LLM override (optional). Set both to point every agent at one
+# provider without editing config/agent_models.yaml. Providers: openai,
+# openrouter, anthropic, google, groq, ollama, azure.
+#   LLM_PROVIDER = groq
+#   LLM_MODEL = llama-3.3-70b-versatile
+# The matching key for that provider must be set (GROQ_API_KEY, GOOGLE_API_KEY, …).
+
 # OpenRouter API key (optional)
 OPENROUTER_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 # Anthropic API key (optional)
 ANTHROPIC_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-# Google API key (optional)
+# Google API key (optional) — free tier at https://aistudio.google.com/apikey
 GOOGLE_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+# Groq API key (optional) — free tier at https://console.groq.com/keys
+GROQ_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 # LangChain API key (optional)
 # Used for monitoring the processing

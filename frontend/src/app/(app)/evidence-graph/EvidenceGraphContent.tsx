@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -37,7 +37,7 @@ function formatRuntime(seconds: number | null): string {
   return `${m}m ${s}s`;
 }
 
-function EvidenceGraphInner() {
+export default function EvidenceGraphContent() {
   const router = useRouter();
   const params = useSearchParams();
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -69,7 +69,6 @@ function EvidenceGraphInner() {
       })
       .catch(() => setOffline(true))
       .finally(() => setHistoryLoading(false));
-    // Only seed the initial selection once, from history load.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -388,13 +387,5 @@ function EvidenceGraphInner() {
         </section>
       </div>
     </main>
-  );
-}
-
-export default function EvidenceGraphPage() {
-  return (
-    <Suspense fallback={null}>
-      <EvidenceGraphInner />
-    </Suspense>
   );
 }
