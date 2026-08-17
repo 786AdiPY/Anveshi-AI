@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 const links = [
-  { href: "/", label: "Home", icon: Plus },
+  { href: "/dashboard", label: "Dashboard", icon: Plus },
   { href: "/runs", label: "Research Runs", icon: ListChecks },
   { href: "/evidence-graph", label: "Evidence Graph", icon: GitBranch },
   { href: "/reports", label: "Saved Reports", icon: Bookmark },
@@ -51,7 +51,7 @@ export function Sidebar() {
 
       <nav className="sidebar-nav" aria-label="Primary">
         {links.map(({ href, label, icon: Icon }) => {
-          const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+          const active = pathname === href || pathname.startsWith(href);
           return (
             <Link
               key={href}
