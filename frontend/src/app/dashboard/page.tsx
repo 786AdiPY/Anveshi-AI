@@ -1,14 +1,12 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Search,
   ArrowRight,
   Sparkles,
-  Target,
-  ShieldCheck,
   BookOpen,
   ListChecks,
   CheckSquare,
@@ -19,6 +17,7 @@ import {
   Bookmark,
   Database,
   Settings,
+  ChevronDown,
 } from "lucide-react";
 import { api, type HistoryItem, type ResearchDepth } from "@/lib/api";
 
@@ -28,11 +27,64 @@ const SUGGESTIONS = [
   { q: "How effective are CRISPR-based therapies for sickle cell disease?", icon: BookOpen },
 ];
 
-const DEPTHS: { key: ResearchDepth; label: string; hint: string }[] = [
-  { key: "quick", label: "Quick", hint: "Fast overview" },
-  { key: "standard", label: "Standard", hint: "Balanced depth" },
-  { key: "deep", label: "Deep", hint: "Comprehensive" },
-];
+function DepthDropdown({
+  value,
+  onChange,
+}: {
+  value: ResearchDepth;
+  onChange: (d: ResearchDepth) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const options: { key: ResearchDepth; label: string }[] = [
+    { key: "quick", label: "Quick" },
+    { key: "standard", label: "Standard" },
+    { key: "deep", label: "Deep" },
+  ];
+
+  const activeLabel = options.find((o) => o.key === value)?.label ?? "Standard";
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="custom-depth-dropdown" ref={ref}>
+      <button
+        type="button"
+        className="custom-depth-trigger"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span>{activeLabel}</span>
+        <ChevronDown size={13} className={`dropdown-chevron${open ? " is-open" : ""}`} />
+      </button>
+      {open && (
+        <div className="custom-depth-menu glass-card">
+          {options.map((opt) => (
+            <button
+              key={opt.key}
+              type="button"
+              className={`custom-depth-option${value === opt.key ? " is-selected" : ""}`}
+              onClick={() => {
+                onChange(opt.key);
+                setOpen(false);
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const QUICK_ACTIONS = [
   { href: "/runs", label: "Research Runs", icon: ListChecks },
@@ -117,44 +169,17 @@ function DashboardInner() {
               }
             }}
           />
-          <button
-            className="button-primary"
-            disabled={!question.trim() || starting}
-            onClick={() => startResearch(question)}
-          >
-            {starting ? "Starting…" : "Start Research"}
-            <ArrowRight size={16} />
-          </button>
-        </div>
-
-        <div className="hero-feature-row">
-          <div className="hero-feature">
-            <Target size={15} />
-            <div>
-              <strong>Multi-agent depth</strong>
-              <span>Literature, Extractor & Challenger agents run per question</span>
-            </div>
-          </div>
-          <div className="hero-feature">
-            <ShieldCheck size={15} />
-            <div>
-              <strong>Verifiable by default</strong>
-              <span>Every claim is source-checked before it reaches the report</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="depth-selector depth-selector--detailed">
-          {DEPTHS.map((d) => (
+          <div className="hero-input-actions">
+            <DepthDropdown value={depth} onChange={setDepth} />
             <button
-              key={d.key}
-              className={`depth-pill depth-pill--detailed${depth === d.key ? " depth-pill-active" : ""}`}
-              onClick={() => setDepth(d.key)}
+              className="button-primary"
+              disabled={!question.trim() || starting}
+              onClick={() => startResearch(question)}
             >
-              <span className="depth-pill__label">{depth === d.key && "● "}{d.label}</span>
-              <span className="depth-pill__hint">{d.hint}</span>
+              {starting ? "Starting…" : "Start Research"}
+              <ArrowRight size={16} />
             </button>
-          ))}
+          </div>
         </div>
 
         <div className="suggestions-header">

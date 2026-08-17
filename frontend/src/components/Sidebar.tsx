@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   Plus,
   ListChecks,
   Settings,
-  ShieldCheck,
   GitBranch,
   Bookmark,
   Database,
@@ -41,11 +41,10 @@ export function Sidebar() {
     <aside className="sidebar">
       <Link href="/" className="sidebar-brand" aria-label="Anveshi AI home">
         <span className="brand-mark" aria-hidden="true">
-          <ShieldCheck size={18} strokeWidth={2.4} />
+          <Image src="/logo.png" alt="Anveshi AI Logo" width={22} height={22} className="brand-logo-img" priority />
         </span>
         <span className="sidebar-brand-text">
           <span className="sidebar-brand-name">Anveshi AI</span>
-          <span className="sidebar-brand-sub">Evidence-Grounded Research</span>
         </span>
       </Link>
 
