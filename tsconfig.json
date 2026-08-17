@@ -13,9 +13,9 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "baseUrl": ".",
+    "baseUrl": "./frontend",
     "paths": {
-      "@/*": ["./frontend/src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["frontend/src/**/*"],
