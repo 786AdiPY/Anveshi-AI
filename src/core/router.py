@@ -63,6 +63,23 @@ def supervisor_router(state: State) -> SupervisorTarget:
         logger.warning("Step count exceeded 30 — routing to Synthesizer to terminate.")
         return "Synthesizer"
 
+    # The Supervisor picks the next step from its own reading of the state, and
+    # regularly skips ahead to Extractor on the first pass, when nothing has
+    # been gathered yet. Downstream agents then work on an empty ledger and the
+    # run finishes with zero sources, so enforce the prerequisites here.
+    papers = get_state_attr(state, "papers", []) or []
+    claims = get_state_attr(state, "claims", []) or []
+    if not papers and next_step not in ("Literature", "FINISH"):
+        logger.info(
+            f"No sources gathered yet — overriding {next_step!r} with Literature."
+        )
+        next_step = "Literature"
+    elif papers and not claims and next_step in ("Challenger", "Synthesizer"):
+        logger.info(
+            f"Sources but no claims yet — overriding {next_step!r} with Extractor."
+        )
+        next_step = "Extractor"
+
     mapping: dict[str, SupervisorTarget] = {
         "Literature": "Literature",
         "Extractor": "Extractor",
@@ -121,6 +138,17 @@ def verifier_router(state: State) -> VerifierTarget:
     needs_more = get_state_attr(state, "needs_more_research", False)
     loop_count = get_state_attr(state, "verification_loop_count", 0)
     max_loops = get_state_attr(state, "max_verification_loops", 3)
+
+    # Synthesizing with nothing extracted yields a brief with no citations, so
+    # loop back for extraction while there is still budget for another pass.
+    papers = get_state_attr(state, "papers", []) or []
+    claims = get_state_attr(state, "claims", []) or []
+    if papers and not claims and loop_count < max_loops:
+        logger.info(
+            f"verifier_router → Supervisor (no claims extracted yet, "
+            f"pass {loop_count}/{max_loops})"
+        )
+        return "Supervisor"
 
     if needs_more and loop_count < max_loops:
         logger.info(f"verifier_router → Supervisor (retry {loop_count}/{max_loops})")

@@ -12,7 +12,7 @@ const TABS: { key: RunStatus | "all"; label: string }[] = [
   { key: "failed", label: "Failed" },
 ];
 
-export default function RunsContent() {
+export default function ResearchRunsPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [tab, setTab] = useState<RunStatus | "all">("all");
   const [loading, setLoading] = useState(true);

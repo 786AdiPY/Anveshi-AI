@@ -17,6 +17,14 @@ cd "$ROOT_DIR"
 BACKEND_PORT="${BACKEND_PORT:-8000}"
 FRONTEND_PORT="${FRONTEND_PORT:-3000}"
 
+echo "==> Cleaning up any stale processes on ports $BACKEND_PORT and $FRONTEND_PORT..."
+fuser -k "${BACKEND_PORT}/tcp" 2>/dev/null || true
+fuser -k "${FRONTEND_PORT}/tcp" 2>/dev/null || true
+pkill -f "next-server" 2>/dev/null || true
+
+# Purge stale/corrupted Next.js dev cache
+rm -rf "$ROOT_DIR/frontend/.next"
+
 # Resolve the Python interpreter: prefer the project venv, fall back to python3.
 if [ -x "$ROOT_DIR/.venv/bin/python" ]; then
   PYTHON="$ROOT_DIR/.venv/bin/python"
@@ -41,7 +49,7 @@ cleanup() {
   echo ""
   echo "==> Shutting down…"
   for pid in "${PIDS[@]:-}"; do
-    # Kill the whole process group: uvicorn --reload and next dev both fork.
+    # Kill the process group
     kill -- "-$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
   done
   wait 2>/dev/null || true

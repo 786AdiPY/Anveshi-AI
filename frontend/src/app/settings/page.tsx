@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Save, AlertCircle } from "lucide-react";
 
@@ -34,7 +34,7 @@ function applyTheme(theme: Theme) {
   }
 }
 
-export default function SettingsContent() {
+function SettingsInner() {
   const params = useSearchParams();
   const tab = (params.get("tab") as Tab) || "general";
 
@@ -228,5 +228,13 @@ export default function SettingsContent() {
         )}
       </section>
     </main>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={null}>
+      <SettingsInner />
+    </Suspense>
   );
 }

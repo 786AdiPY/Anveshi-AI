@@ -2,7 +2,7 @@
 
 import { CompletedRunsList } from "@/components/CompletedRunsList";
 
-export default function SavedReportsContent() {
+export default function SavedReportsPage() {
   return (
     <CompletedRunsList
       title="Saved Reports"

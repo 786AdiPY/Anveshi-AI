@@ -323,7 +323,7 @@ export default function LiveRunPage() {
       {/* Top Header Bar */}
       <div className="run-header">
         <div className="run-header-left">
-          <Link href="/dashboard" className="back-link">
+          <Link href="/" className="back-link">
             <ArrowLeft size={15} /> Back
           </Link>
           <span className={`status-badge status-badge-${status}`}>

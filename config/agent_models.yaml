@@ -1,7 +1,14 @@
 # Per-agent model configuration.
 #
-# Model: openai/gpt-4o-mini
-# max_tokens is set to 600 per agent to fit within remaining OpenRouter credit limits.
+# Provider/model per agent. LLM_PROVIDER + LLM_MODEL in .env override both
+# for every agent at once (currently: groq / llama-3.3-70b-versatile).
+#
+# max_tokens caps the completion. Ledger and graph agents emit small JSON, so
+# they get the tightest caps; the synthesizer writes the full brief and needs
+# room. Tighten these again if you move back to a metered provider.
+#
+# max_iterations bounds the tool-calling rounds inside one agent, and is the
+# main driver of wall-clock time per run.
 
 agents:
   planner_agent:
@@ -9,7 +16,7 @@ agents:
     model_config:
       model: openai/gpt-4o-mini
       temperature: 0.7
-      max_tokens: 600
+      max_tokens: 2048
     max_iterations: 12
     system_prompt_file: config/agents/planner/AGENT.md
 
@@ -18,7 +25,7 @@ agents:
     model_config:
       model: openai/gpt-4o-mini
       temperature: 0.5
-      max_tokens: 500
+      max_tokens: 1024
     max_iterations: 12
     system_prompt_file: config/agents/supervisor/AGENT.md
 
@@ -27,7 +34,7 @@ agents:
     model_config:
       model: openai/gpt-4o-mini
       temperature: 0.5
-      max_tokens: 600
+      max_tokens: 3072
     max_iterations: 12
     system_prompt_file: config/agents/literature/AGENT.md
 
@@ -36,7 +43,7 @@ agents:
     model_config:
       model: openai/gpt-4o-mini
       temperature: 0.3
-      max_tokens: 600
+      max_tokens: 3072
     max_iterations: 12
     system_prompt_file: config/agents/extractor/AGENT.md
 
@@ -45,7 +52,7 @@ agents:
     model_config:
       model: openai/gpt-4o-mini
       temperature: 0.7
-      max_tokens: 600
+      max_tokens: 3072
     max_iterations: 12
     system_prompt_file: config/agents/challenger/AGENT.md
 
@@ -54,7 +61,7 @@ agents:
     model_config:
       model: openai/gpt-4o-mini
       temperature: 0.1
-      max_tokens: 600
+      max_tokens: 3072
     max_iterations: 12
     system_prompt_file: config/agents/verifier/AGENT.md
 
@@ -63,7 +70,7 @@ agents:
     model_config:
       model: openai/gpt-4o-mini
       temperature: 0.1
-      max_tokens: 500
+      max_tokens: 1536
     max_iterations: 12
     system_prompt_file: config/agents/ledger/AGENT.md
 
@@ -72,7 +79,7 @@ agents:
     model_config:
       model: openai/gpt-4o-mini
       temperature: 0.1
-      max_tokens: 500
+      max_tokens: 1536
     max_iterations: 12
     system_prompt_file: config/agents/evidence_graph/AGENT.md
 
@@ -81,6 +88,6 @@ agents:
     model_config:
       model: openai/gpt-4o-mini
       temperature: 0.7
-      max_tokens: 600
+      max_tokens: 4096
     max_iterations: 12
     system_prompt_file: config/agents/synthesizer/AGENT.md
