@@ -1,261 +1,147 @@
-# Anveshi AI
+# Anveshi AI — Multi-Agent Evidence-Grounded Research Engine
 
-**Author:** [786AdiPY](https://github.com/786AdiPY)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Next.js 16](https://img.shields.io/badge/Frontend-Next.js%2016-000000.svg)](https://nextjs.org/)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg)](https://www.python.org/)
+[![Supabase](https://img.shields.io/badge/Database-Supabase-3ECF8E.svg)](https://supabase.com/)
 
-## About Anveshi AI
-Anveshi AI is a powerful platform designed for automated data analysis and research through a multi-agent system.
+**Anveshi AI** is an advanced multi-agent research platform designed to automate literature search, evidence extraction, contradiction detection, and report synthesis through coordinated specialized AI agents and human-AI collaboration.
 
-![System Architecture](./docs/Architecture.png)
-## Overview
+---
 
-Anveshi AI is an advanced AI-powered data analysis and research platform that utilizes multiple specialized agents to streamline tasks such as data analysis, visualization, and report generation. Our platform leverages cutting-edge technologies including LangChain, OpenAI's GPT models, and LangGraph to handle complex research processes, integrating diverse AI architectures for optimal performance.
+## 📐 System Architecture
 
-## Key Features
+![Anveshi AI – Research Workflow Architecture](./architecture.png)
 
-### Intelligent Analysis Core
-- **Advanced Hypothesis Engine**
-  - AI-driven hypothesis generation and validation
-  - Automated research direction optimization
-  - Real-time hypothesis refinement
-- **Enterprise Data Processing**
-  - Robust data cleaning and transformation
-  - Scalable analysis pipelines
-  - Automated quality assurance
-- **Dynamic Visualization Suite**
-  - Interactive data visualization
-  - Custom report generation
-  - Automated insight extraction
+The system transforms raw research queries into verified, visualization-rich outputs through a multi-agent processing pipeline:
 
-### Advanced Technical Architecture
-- **Multi-Agent Intelligence** 
-  - Specialized agents for diverse tasks
-  - Intelligent task distribution
-  - Real-time coordination and optimization
-- **Smart Memory Management**
-  - State-of-the-art Note Taker agent
-  - Efficient context retention system
-  - Seamless workflow integration
-- **Adaptive Processing Pipeline**
-  - Dynamic workflow adjustment
-  - Automated resource optimization
-  - Real-time performance monitoring
+```mermaid
+graph TD
+    A[Research Query] --> B[Planner Agent]
+    B --> C[Supervisor Agent]
+    C --> D[Literature Researcher]
+    C --> E[Evidence Extractor]
+    C --> F[Challenger Agent]
+    D & E & F --> G[Ledger Agent]
+    G --> H[Verifier Agent]
+    H --> I[Synthesizer Agent]
+    I --> J[Evidence Graph Agent]
+    J --> K[Interactive Brief & Evidence Graph]
+```
 
-## Why Anveshi AI Stands Out
+---
 
-Anveshi AI revolutionizes data analysis through its innovative multi-agent architecture and intelligent automation capabilities:
+## ✨ Key Features
 
-1. **Advanced Multi-Agent System**
-   - Specialized agents working in harmony
-   - Intelligent task distribution and coordination
-   - Real-time adaptation to complex analysis requirements
+### 🤖 Multi-Agent Processing Pipeline
+- **Planner Agent**: Deconstructs complex research questions into structured sub-hypotheses and query plans.
+- **Supervisor Agent**: Manages state transitions and orchestrates parallel agent dispatch.
+- **Literature Researcher**: Discovers relevant academic papers, preprints, and verified web sources.
+- **Evidence Extractor**: Extracts atomic claims, methodology notes, and direct excerpt citations.
+- **Challenger Agent**: Actively searches for opposing/contradictory evidence to eliminate confirmation bias.
+- **Ledger Agent**: Maintains a centralized claims repository and tracks evidence grounding scores.
+- **Verifier Agent**: Runs automated checks (`Source Citation`, `Factual Grounding`, `Error Analysis`) marking claims as `PASS`, `FAIL`, or `UNCERTAIN`.
+- **Synthesizer Agent**: Compiles executive briefs, key findings, and methodology summaries into markdown reports.
+- **Evidence Graph Agent**: Constructs directional node-edge evidence networks.
 
-2. **Smart Context Management**
-   - Pioneering Note Taker agent for state tracking
-   - Efficient memory utilization and context retention
-   - Seamless integration across analysis phases
+### 📊 Real-Time Interactive UI & Export
+- **Live Canvas Execution**: Visualizes agent execution flow step-by-step using interactive node graphs.
+- **Interactive Evidence Graph**: Explore paper-to-claim and contradiction relationships interactively.
+- **One-Click Clean Export**: Export full research briefs to clean, print-styled PDF documents or raw Markdown.
+- **Saved Reports & Runs**: Access historical runs, view verification breakdowns, and restart past investigations.
 
-3. **Enterprise-Grade Performance**
-   - Robust and scalable architecture
-   - Consistent and reliable outcomes
-   - Production-ready implementation
+---
 
-## System Requirements
+## 🛠️ Technology Stack
 
-- Python 3.10 or higher
+| Layer | Technologies |
+|---|---|
+| **Frontend** | Next.js 16 (App Router), React 19, TypeScript, Vanilla CSS, XYFlow (ReactFlow), Lucide Icons |
+| **Backend** | Python 3.10+, FastAPI, LangChain, LangGraph, Uvicorn |
+| **Database & Auth** | Supabase PostgreSQL |
+| **Search & Scraping** | Tavily Search API, DuckDuckGo, Firecrawl / fastCRW |
+| **LLM Support** | OpenAI (GPT-4o / GPT-4o-mini), Anthropic (Claude), Google (Gemini) |
 
-## Installation
+---
 
-1. Clone the repository:
+## 🚀 Quick Start
+
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/786AdiPY/Anveshi-AI.git
+cd Anveshi-AI
 ```
-2. Create and activate a Conda virtual environment:
+
+### 2. Environment Setup
+
+Copy `.env Example` to `.env`:
 ```bash
-conda create -n anveshi-ai python=3.10
-conda activate anveshi-ai
+cp ".env Example" .env
 ```
-3. Install dependencies:
+
+Configure your API keys in `.env`:
+```env
+OPENAI_API_KEY=your_openai_api_key
+TAVILY_API_KEY=your_tavily_api_key
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+### 3. Backend Setup
 ```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+python -m src.api
 ```
-4. Set up environment variables:
-**Rename `.env Example` to `.env` and fill all the values**
-```sh
-# Your data storage path (required)
-# Also used by filesystem MCP server
-WORKING_DIRECTORY = ./data/
+*Backend runs on `http://localhost:8000`*
 
-# Configuration directory path (optional)
-# All config files (agent_models.yaml, agents/, mcp.yaml) are relative to this directory.
-# Default is config/
-# Use 'config_local' for local development to avoid Git tracking (already in .gitignore)
-CONFIG_DIRECTORY = config
-
-# Conda environment name (required)
-CONDA_ENV = anveshi-ai
-
-# ChromeDriver executable path (required)
-CHROMEDRIVER_PATH = ./chromedriver-linux64/chromedriver
-
-# Firecrawl API key (optional)
-# Note: If this key is missing, query capabilities may be reduced
-FIRECRAWL_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-# fastCRW (Firecrawl-compatible web scraper; single binary, self-host or cloud) (optional)
-# API key for the managed cloud; optional for self-host
-CRW_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# Defaults to the managed cloud; override for self-host (e.g. http://localhost:3000)
-CRW_API_URL = https://fastcrw.com/api
-
-# OpenAI API key (optional)
-OPENAI_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# Anthropic API key (optional)
-ANTHROPIC_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# Google API key (optional)
-GOOGLE_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-# LangChain API key (optional)
-# Used for monitoring the processing
-LANGCHAIN_TRACING_V2 = true
-LANGCHAIN_PROJECT = "Multi-agent-DataAnalysis"
-LANGCHAIN_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-# MCP (Model Context Protocol) Settings (optional)
-# Tavily API key — primary backend for the built-in web search tool (recommended).
-# Without it, search falls back to DuckDuckGo, then to a headless Google scrape.
-TAVILY_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# GitHub token for github MCP server
-GITHUB_TOKEN = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-```
-
-## Usage
-
-### Using Python Script
-
-You can run the system  using main.py:
-
-1. Place your data file (e.g., YourDataName.csv) in the data directory
-
-2. Modify the user_input variable in the main() function of main.py:
-```python
-user_input = '''
-datapath:YourDataName.csv
-Use machine learning to perform data analysis and write complete graphical reports
-'''
-```
-
-ˇ. Run the script:
+### 4. Frontend Setup
 ```bash
-python main.py
+cd frontend
+npm install
+npm run dev
 ```
+*Frontend runs on `http://localhost:3000`*
 
-## Main Components
+---
 
-- `hypothesis_agent`: Generates research hypotheses
-- `process_agent`: Supervises the entire research process
-- `visualization_agent`: Creates data visualizations
-- `code_agent`: Writes data analysis code
-- `searcher_agent`: Conducts literature and web searches
-- `report_agent`: Writes research reports
-- `quality_review_agent`: Performs quality reviews
-- `note_agent`: Records the research process
+## ⚙️ Agent & Model Configuration
 
-## Workflow
-
-The system uses LangGraph to create a state graph that manages the entire research process. The workflow includes the following steps:
-
-1. Hypothesis generation
-2. Human choice (continue or regenerate hypothesis)
-3. Processing (including data analysis, visualization, search, and report writing)
-4. Quality review
-5. Revision as needed
-
-### Agent Model Configuration
-
-Users can customize each agent's language model provider and model configuration by editing the `agent_models.yaml` file (located in your `CONFIG_DIRECTORY`). This allows for seamless environment switching (dev/prod) by simply pointing to a different configuration folder.
-
-Here's an example structure of `agent_models.yaml`:
+Customize language model providers and temperatures per agent in `config/agent_models.yaml`:
 
 ```yaml
 agents:
-  hypothesis_agent:
+  planner_agent:
     provider: openai
     model_config:
-      model: gpt-5-nano
-      temperature: 1.0
-  note_agent:
-    provider: google
+      model: gpt-4o-mini
+      temperature: 0.7
+  verifier_agent:
+    provider: openai
     model_config:
-      model: gemini-2.5-pro
-      temperature: 1.0
-  code_agent:
-    provider: anthropic
-    model_config:
-      model: claude-haiku-4-5
-      temperature: 1.0
+      model: gpt-4o
+      temperature: 0.2
 ```
 
-- **provider**: Specifies the language model provider to use (e.g., openai, google, anthropic, ollama, groq)
-- **model_config**: Contains model-specific configuration parameters
-  - `model`: The specific model name to use
-  - `temperature`: Controls the randomness of model output (range: 0.0-2.0)
+---
 
-## Advanced Configuration System
+## 📑 Documentation
 
-Anveshi AI implements a powerful **Progressive Disclosure** architecture for agent configuration, inspired by [Claude Agent Skills](https://platform.claude.com/docs/agents-and-tools/agent-skills/overview).
+- [System Architecture](docs/SYSTEM_ARCHITECTURE.md)
+- [Agent Config Reference](docs/AGENT_CONFIG.md)
+- [Tool Configuration](docs/TOOL_CONFIG.md)
+- [Skill Configuration](docs/SKILL_CONFIG.md)
+- [MCP Configuration](docs/MCP_CONFIG.md)
 
-### Documentation
+---
 
-| Guide | Description |
-|-------|-------------|
-| [System Architecture](docs/SYSTEM_ARCHITECTURE.md) | High-level overview and core concepts |
-| [Quick Start](docs/QUICKSTART.md) | Create a new agent in 5 minutes |
-| [Agent Config Reference](docs/AGENT_CONFIG.md) | AGENT.md and config.yaml full reference |
-| [Tool Configuration](docs/TOOL_CONFIG.md) | Available tools and custom tool creation |
-| [Skill Configuration](docs/SKILL_CONFIG.md) | Create and use reusable knowledge modules |
-| [MCP Configuration](docs/MCP_CONFIG.md) | Model Context Protocol server setup |
+## 📄 License
 
-### Key Features
-- **Unified Config Root**: All core settings are managed via the `CONFIG_DIRECTORY` environment variable.
-- **Skill-Based Architecture**: Reusable skills stored in `skills/` (within the config root)
-- **Dynamic Tool Loading**: Tools configured via `config.yaml` using `ToolFactory`
-- **Model Context Protocol (MCP)**: External server integration (Filesystem, GitHub, Web Search)
-- **Progressive Disclosure**: Three-level loading strategy for Context Window optimization
+Distributed under the MIT License. See `LICENSE` for details.
 
-## Notes
+---
 
-- Ensure you have sufficient API credits, as the system will make multiple API calls.
-- The system may take some time to complete the entire research process, depending on the complexity of the task.
-- **WARNING**: The agent system may modify the data being analyzed. It is highly recommended to backup your data before using this system.
-- Anveshi AI does not ship or train on project-provided training datasets. Users provide their own analysis data at runtime through `WORKING_DIRECTORY`.
+## 👤 Author
 
-## Current Issues and Solutions
-1. NoteTaker Efficiency Improvement
-2. Overall Runtime Optimization
-3. Refiner needs to be better
-## Contributing
-
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Star History
-
-[![Star History Chart](https://star-history.dera.page/svg?repos=786AdiPY/Anveshi-AI&type=Date)](https://star-history.dera.page/#786AdiPY/Anveshi-AI&type=Date)
-
-## Other Projects
-Here are some of my other notable projects:
-
-### PheroPath
-PheroPath is a filesystem-based stigmergy communication protocol that allows agents and humans to leave invisible "pheromones" (signals) on files. It enables communicating context, risks (DANGER), or status (TODO, SAFE) without modifying the file content itself, facilitating better multi-agent collaboration.
-- GitHub: [PheroPath](https://github.com/zi-yue-1129/PheroPath)
-
-### PigPig: Advanced Multi-modal LLM Discord Bot
-A powerful Discord bot based on multi-modal Large Language Models (LLM), designed to interact with users through natural language. It combines advanced AI capabilities with practical features, offering a rich experience for Discord communities.
-- GitHub: [ai-discord-bot-PigPig](https://github.com/zi-yue-1129/ai-discord-bot-PigPig)
-
-### research-lab-skills
-Composable Agent Skills covering the complete research lifecycle: literature review, research logs, experiment tracking, analysis, lab presentations, manuscript writing, and peer review.
-- GitHub: [research-lab-skills](https://github.com/zi-yue-1129/research-lab-skills)
+Developed by **[786AdiPY](https://github.com/786AdiPY)**.
