@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
@@ -47,6 +47,7 @@ function extractHeadings(markdown: string): Heading[] {
 
 export default function ReportPage() {
   const { id } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const [run, setRun] = useState<ResearchRun | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -108,10 +109,14 @@ export default function ReportPage() {
       ? Math.max(0, (new Date(run.completed_at).getTime() - new Date(run.started_at).getTime()) / 1000)
       : null;
 
+  const fromGraph = searchParams.get("from") === "graph";
+  const backHref = fromGraph ? `/evidence-graph?run=${id}` : `/research/${id}/run`;
+  const backLabel = fromGraph ? "Back to Evidence Graph" : "Back to process view";
+
   return (
     <main className="page-container report-page">
-      <Link href={`/research/${id}/run`} className="back-link">
-        <ArrowLeft size={15} /> Back to process view
+      <Link href={backHref} className="back-link">
+        <ArrowLeft size={15} /> {backLabel}
       </Link>
 
       <header className="report-header glass-card">

@@ -234,7 +234,7 @@ function EvidenceGraphInner() {
                   </div>
                 </div>
                 <div className="evidence-hub__detail-actions">
-                  <Link href={`/research/${run.id}`} className="button-secondary">
+                  <Link href={`/research/${run.id}?from=graph`} className="button-secondary">
                     <BookOpen size={13} /> View Report
                   </Link>
                   <button
