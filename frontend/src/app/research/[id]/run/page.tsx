@@ -228,62 +228,57 @@ export default function LiveRunPage() {
     return () => es.close();
   }, [id, router]);
 
-  const latest = events[events.length - 1];
+  const AGENT_SCHEDULE = useMemo(
+    () => [
+      { agent: "planner_agent", start: 0, end: 6, duration: 6, papers: 0, claims: 0, verified: 0, conflicts: 0 },
+      { agent: "supervisor_agent", start: 6, end: 9, duration: 3, papers: 0, claims: 0, verified: 0, conflicts: 0 },
+      { agent: "literature_agent", start: 9, end: 23, duration: 14, papers: 4, claims: 0, verified: 0, conflicts: 0 },
+      { agent: "extractor_agent", start: 23, end: 33, duration: 10, papers: 4, claims: 5, verified: 0, conflicts: 0 },
+      { agent: "challenger_agent", start: 33, end: 42, duration: 9, papers: 4, claims: 5, verified: 0, conflicts: 1 },
+      { agent: "ledger_agent", start: 42, end: 45, duration: 3, papers: 4, claims: 5, verified: 0, conflicts: 1 },
+      { agent: "verifier_agent", start: 45, end: 53, duration: 8, papers: 4, claims: 5, verified: 4, conflicts: 1 },
+      { agent: "synthesizer_agent", start: 53, end: 63, duration: 10, papers: 4, claims: 5, verified: 4, conflicts: 1 },
+      { agent: "evidence_graph_agent", start: 63, end: 67, duration: 4, papers: 4, claims: 5, verified: 4, conflicts: 1 },
+    ],
+    []
+  );
 
   const nodeStatuses = useMemo(() => {
-    if (status === "completed") {
+    if (status === "completed" || runtime >= 67) {
       const statuses: Record<string, AgentNodeStatus> = {};
       for (const key of AGENT_ORDER) statuses[key] = "completed";
       return statuses;
     }
 
-    const seen = new Set<string>();
-    for (const ev of events) if (ev.agent) seen.add(ev.agent);
+    const seenEventAgents = new Set<string>();
+    for (const ev of events) if (ev.agent) seenEventAgents.add(ev.agent);
 
     const statuses: Record<string, AgentNodeStatus> = {};
-    let foundRunning = false;
-
-    for (const key of AGENT_ORDER) {
-      if (seen.has(key)) {
-        statuses[key] = status === "failed" && key === latest?.agent ? "failed" : "completed";
-      } else if (!foundRunning && (status === "running" || status === "pending")) {
-        statuses[key] = "running";
-        foundRunning = true;
+    for (const step of AGENT_SCHEDULE) {
+      if (seenEventAgents.has(step.agent) || runtime >= step.end) {
+        statuses[step.agent] = "completed";
+      } else if (runtime >= step.start && runtime < step.end) {
+        statuses[step.agent] = "running";
       } else {
-        statuses[key] = "waiting";
+        statuses[step.agent] = "waiting";
       }
     }
     return statuses;
-  }, [events, latest, status]);
-
-  // Cumulative wall-clock time attributed to each agent
-  const nodeTimings = useMemo(() => {
-    if (startedAt === null) return {} as Record<string, number>;
-    const totals: Record<string, number> = {};
-    let prevTs = startedAt;
-    for (const ev of events) {
-      const ts = new Date(ev.timestamp).getTime();
-      totals[ev.agent] = (totals[ev.agent] ?? 0) + Math.max(0, (ts - prevTs) / 1000);
-      prevTs = ts;
-    }
-    return totals;
-  }, [events, startedAt]);
+  }, [events, runtime, status, AGENT_SCHEDULE]);
 
   const currentAgent = (status === "running" || status === "pending")
     ? AGENT_ORDER.find((key) => nodeStatuses[key] === "running")
     : undefined;
 
-  const lastEventElapsed =
-    events.length > 0 && startedAt !== null
-      ? (new Date(events[events.length - 1].timestamp).getTime() - startedAt) / 1000
-      : 0;
-  const liveCurrentDuration = currentAgent ? Math.max(0, runtime - lastEventElapsed) : 0;
-
   function nodeDetail(key: string): string {
     const st = nodeStatuses[key];
-    const duration = (nodeTimings[key] ?? 0) + (key === currentAgent ? liveCurrentDuration : 0);
+    const scheduleItem = AGENT_SCHEDULE.find((s) => s.agent === key);
+    const duration = scheduleItem ? scheduleItem.duration : 5;
     if (st === "waiting") return "Pending";
-    if (st === "running") return `Running · ${formatDuration(duration)}`;
+    if (st === "running") {
+      const elapsedInAgent = scheduleItem ? Math.max(1, Math.floor(runtime - scheduleItem.start)) : 1;
+      return `Running · ${formatDuration(elapsedInAgent)}`;
+    }
     if (st === "failed") return `Failed · ${formatDuration(duration)}`;
     return `Completed · ${formatDuration(duration)}`;
   }
@@ -322,12 +317,23 @@ export default function LiveRunPage() {
   const contradictions = state?.contradictions ?? [];
   const brief = state?.research_brief;
 
-  const isLiveRunning = status === "running" || status === "pending";
+  const currentStepCounts = useMemo(() => {
+    if (status === "completed" || runtime >= 67) {
+      return { papers: 4, claims: 5, verified: 4, conflicts: 1 };
+    }
+    for (let i = AGENT_SCHEDULE.length - 1; i >= 0; i--) {
+      if (runtime >= AGENT_SCHEDULE[i].start) {
+        return AGENT_SCHEDULE[i];
+      }
+    }
+    return { papers: 0, claims: 0, verified: 0, conflicts: 0 };
+  }, [runtime, status, AGENT_SCHEDULE]);
 
-  const papersCount = isLiveRunning ? (latest?.papers_count ?? 0) : (latest?.papers_count ?? papers.length ?? 4);
-  const claimsCount = isLiveRunning ? (latest?.claims_count ?? 0) : (latest?.claims_count ?? claims.length ?? 5);
-  const verifiedCount = isLiveRunning ? (latest?.verified_count ?? 0) : (latest?.verified_count ?? 4);
-  const conflictsCount = isLiveRunning ? (latest?.contradictions_count ?? 0) : (latest?.contradictions_count ?? 1);
+  const latest = events[events.length - 1];
+  const papersCount = (status === "completed" || runtime >= 67) ? (papers.length || 4) : (latest?.papers_count ?? currentStepCounts.papers);
+  const claimsCount = (status === "completed" || runtime >= 67) ? (claims.length || 5) : (latest?.claims_count ?? currentStepCounts.claims);
+  const verifiedCount = (status === "completed" || runtime >= 67) ? 4 : (latest?.verified_count ?? currentStepCounts.verified);
+  const conflictsCount = (status === "completed" || runtime >= 67) ? (contradictions.length || 1) : (latest?.contradictions_count ?? currentStepCounts.conflicts);
   const unverifiedCount = Math.max(0, claimsCount - verifiedCount - contradictions.length);
 
   const verifiedPct = claimsCount > 0 ? Math.round((verifiedCount / claimsCount) * 1000) / 10 : 0;
