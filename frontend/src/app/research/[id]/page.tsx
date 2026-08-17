@@ -109,9 +109,19 @@ export default function ReportPage() {
       ? Math.max(0, (new Date(run.completed_at).getTime() - new Date(run.started_at).getTime()) / 1000)
       : null;
 
-  const fromGraph = searchParams.get("from") === "graph";
-  const backHref = fromGraph ? `/evidence-graph?run=${id}` : `/research/${id}/run`;
-  const backLabel = fromGraph ? "Back to Evidence Graph" : "Back to process view";
+  const fromParam = searchParams.get("from");
+  const backHref =
+    fromParam === "reports"
+      ? "/reports"
+      : fromParam === "graph"
+      ? `/evidence-graph?run=${id}`
+      : `/research/${id}/run`;
+  const backLabel =
+    fromParam === "reports"
+      ? "Back to Saved Reports"
+      : fromParam === "graph"
+      ? "Back to Evidence Graph"
+      : "Back to process view";
 
   return (
     <main className="page-container report-page">
