@@ -329,16 +329,26 @@ def run_demo_simulation(
     testing pushed a scripted 67s run out to 170s — entirely spent blocked on
     HTTP calls that have nothing to do with the demo's own timing.
     """
+    started_at = datetime.utcnow()
     run_entry["status"] = "running"
-    run_entry["started_at"] = datetime.utcnow().isoformat()
+    run_entry["started_at"] = started_at.isoformat()
     _persist_async(run_entry, persist_run)
+
+    # Event timestamps are computed from started_at + the *scripted* cumulative
+    # delay, not wall-clock time at the moment each step fires. Real thread
+    # scheduling jitter (a few hundred ms here and there) would otherwise make
+    # the stored/displayed total drift from the exact 67s (1m 7s) this demo is
+    # supposed to always show, on top of the actual time.sleep() below staying
+    # true to the same schedule.
+    elapsed = timedelta(0)
 
     for agent, delay, papers_so_far, claims_so_far, verified_so_far, contradictions_so_far in _STEPS:
         time.sleep(delay)
+        elapsed += timedelta(seconds=delay)
 
         is_last = agent == "evidence_graph_agent"
         event_payload = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": (started_at + elapsed).isoformat(),
             "agent": agent,
             "step_count": len(run_entry["events"]) + 1,
             "papers_count": papers_so_far,
@@ -361,5 +371,5 @@ def run_demo_simulation(
         _persist_async(run_entry, persist_run)
 
     run_entry["status"] = "completed"
-    run_entry["completed_at"] = datetime.utcnow().isoformat()
+    run_entry["completed_at"] = (started_at + elapsed).isoformat()
     _persist_async(run_entry, persist_run)

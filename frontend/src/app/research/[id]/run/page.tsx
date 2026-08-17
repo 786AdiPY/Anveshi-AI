@@ -135,6 +135,14 @@ export default function LiveRunPage() {
   const [depth, setDepth] = useState("standard");
   const [fullRun, setFullRun] = useState<ResearchRun | null>(null);
   const [showLogs, setShowLogs] = useState(false);
+  const [toasts, setToasts] = useState<{ id: number; text: string }[]>([]);
+  const toastIdRef = useRef(0);
+
+  function pushToast(text: string) {
+    const toastId = ++toastIdRef.current;
+    setToasts((prev) => [...prev, { id: toastId, text }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== toastId)), 4000);
+  }
   const [activeTab, setActiveTab] = useState<"overview" | "findings" | "methodology" | "conclusions">("overview");
   const esRef = useRef<EventSource | null>(null);
 
@@ -165,29 +173,27 @@ export default function LiveRunPage() {
       .catch(() => {});
   }, [id]);
 
+  // Ticking timer while a run is active. Anchored to the real startedAt, and
+  // deliberately does NOT depend on fullRun — fullRun is a freshly-fetched
+  // object on every single SSE event (new reference each time), so including
+  // it here was resetting this interval, and the displayed runtime, back to
+  // 0 on every agent step instead of ticking continuously.
   useEffect(() => {
-    if (status === "completed" || status === "failed") {
-      const endAnchor = fullRun?.completed_at;
-      const startAnchor = fullRun?.started_at ?? fullRun?.created_at;
-      let rawSecs = 0;
-      if (endAnchor && startAnchor) {
-        rawSecs = Math.max(0, (new Date(endAnchor).getTime() - new Date(startAnchor).getTime()) / 1000);
-      }
-      // Prevent timezone offset leaks (> 5 mins) or 0s default
-      if (rawSecs === 0 || rawSecs > 300) {
-        rawSecs = 138; // 2m 18s default fallback
-      }
-      setRuntime(rawSecs);
-      return;
-    }
-
-    // Active/running run: start timer cleanly from 0 seconds
-    const mountTime = Date.now();
-    setRuntime(0);
-    const timer = setInterval(() => {
-      setRuntime(Math.floor((Date.now() - mountTime) / 1000));
-    }, 1000);
+    if (startedAt === null || status === "completed" || status === "failed") return;
+    const timer = setInterval(() => setRuntime((Date.now() - startedAt) / 1000), 1000);
     return () => clearInterval(timer);
+  }, [startedAt, status]);
+
+  // Once a run finishes, freeze at its real final duration (completed_at -
+  // started_at) instead of continuing to tick — otherwise reopening an old
+  // completed run later would show an ever-growing "started N minutes ago".
+  useEffect(() => {
+    if (status !== "completed" && status !== "failed") return;
+    const startAnchor = fullRun?.started_at ?? fullRun?.created_at;
+    const endAnchor = fullRun?.completed_at;
+    if (startAnchor && endAnchor) {
+      setRuntime(Math.max(0, (new Date(endAnchor).getTime() - new Date(startAnchor).getTime()) / 1000));
+    }
   }, [status, fullRun]);
 
   useEffect(() => {
@@ -198,6 +204,7 @@ export default function LiveRunPage() {
       const payload: AgentUpdateEvent = JSON.parse((e as MessageEvent).data);
       setEvents((prev) => [...prev, payload]);
       setStatus("running");
+      pushToast(`✓ ${AGENT_LABEL[payload.agent] ?? payload.agent} completed`);
       api.getRun(id).then(setFullRun).catch(() => {});
     });
 
@@ -206,6 +213,7 @@ export default function LiveRunPage() {
       setStatus(payload.status);
       setError(payload.error ?? null);
       es.close();
+      if (payload.status === "completed") pushToast("🎉 Research complete");
       api.getRun(id).then(setFullRun).catch(() => {});
     });
 
@@ -224,32 +232,18 @@ export default function LiveRunPage() {
   // because the overall status is "completed".
   // Node statuses advance sequentially one agent at a time during execution
   const nodeStatuses = useMemo(() => {
-    if (status === "completed") {
-      const statuses: Record<string, AgentNodeStatus> = {};
-      for (const key of AGENT_ORDER) statuses[key] = "completed";
-      return statuses;
-    }
-
-    const seenCompleted = new Set<string>();
-    for (const ev of events) {
-      if (ev.agent) seenCompleted.add(ev.agent);
-    }
+    const seen = new Set<string>();
+    for (const ev of events) if (ev.agent) seen.add(ev.agent);
+    const current = latest?.agent;
 
     const statuses: Record<string, AgentNodeStatus> = {};
-    let foundRunning = false;
-
     for (const key of AGENT_ORDER) {
-      if (seenCompleted.has(key)) {
-        statuses[key] = "completed";
-      } else if (!foundRunning && (status === "running" || status === "pending")) {
-        statuses[key] = "running";
-        foundRunning = true;
-      } else {
-        statuses[key] = "waiting";
-      }
+      if (key === current && status === "running") statuses[key] = "running";
+      else if (seen.has(key)) statuses[key] = status === "failed" && key === current ? "failed" : "completed";
+      else statuses[key] = "waiting";
     }
     return statuses;
-  }, [events, status]);
+  }, [events, latest, status]);
 
   // Cumulative wall-clock time attributed to each agent
   const nodeTimings = useMemo(() => {
@@ -341,6 +335,14 @@ export default function LiveRunPage() {
 
   return (
     <main className="page-container run-page">
+      <div className="run-toast-stack">
+        {toasts.map((t) => (
+          <div key={t.id} className="run-toast">
+            {t.text}
+          </div>
+        ))}
+      </div>
+
       {/* Top Header Bar */}
       <div className="run-header">
         <div className="run-header-left">
