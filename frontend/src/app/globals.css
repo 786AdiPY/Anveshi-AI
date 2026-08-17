@@ -646,6 +646,26 @@ button {
   font-size: 13px;
 }
 
+.run-question {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.run-question p {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 70ch;
+}
+
+.run-question .button-secondary {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .canvas-wrapper {
   height: 460px;
   padding: 4px;

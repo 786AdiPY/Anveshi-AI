@@ -11,7 +11,7 @@ import {
   MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { AlertCircle, ArrowLeft } from "lucide-react";
+import { AlertCircle, ArrowLeft, Pencil } from "lucide-react";
 import { api, type AgentUpdateEvent } from "@/lib/api";
 import { AgentNode, type AgentNodeStatus, type AgentNodeData } from "@/components/AgentNode";
 import { MetricsBar } from "@/components/MetricsBar";
@@ -79,7 +79,9 @@ export default function LiveRunPage() {
   // user navigates to an agent inspector and back, and a mount-time clock
   // would restart the timer on every visit instead of tracking the real run.
   const [startedAt, setStartedAt] = useState<number | null>(null);
-  const [runtime, setRuntime] = useState(0);
+  const [, setTick] = useState(0);
+  const [question, setQuestion] = useState<string | null>(null);
+  const [depth, setDepth] = useState("standard");
   const esRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
@@ -89,16 +91,23 @@ export default function LiveRunPage() {
         const anchor = run.started_at ?? run.created_at;
         if (anchor) setStartedAt(new Date(anchor).getTime());
         setStatus(run.status);
+        setQuestion(run.question);
+        setDepth(run.depth);
       })
       .catch(() => {});
   }, [id]);
 
   useEffect(() => {
     if (startedAt === null) return;
-    setRuntime((Date.now() - startedAt) / 1000);
-    const timer = setInterval(() => setRuntime((Date.now() - startedAt) / 1000), 1000);
+    const timer = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(timer);
   }, [startedAt]);
+
+  // tick only forces a re-render each second; the actual value is always
+  // computed fresh from the wall clock so it's correct immediately, not just
+  // after the first interval fires.
+  const runtime = startedAt !== null ? (Date.now() - startedAt) / 1000 : 0;
+  void tick;
 
   useEffect(() => {
     const es = new EventSource(api.streamUrl(id));
@@ -176,6 +185,18 @@ export default function LiveRunPage() {
           </div>
         )}
       </div>
+
+      {question && (
+        <div className="run-question">
+          <p>{question}</p>
+          <Link
+            href={`/?q=${encodeURIComponent(question)}&depth=${depth}`}
+            className="button-secondary"
+          >
+            <Pencil size={13} /> Edit &amp; start new run
+          </Link>
+        </div>
+      )}
 
       <div className="canvas-wrapper glass-card">
         <ReactFlow

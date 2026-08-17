@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Search, ArrowRight } from "lucide-react";
 import { api, type HistoryItem, type ResearchDepth } from "@/lib/api";
 import { ResearchCard } from "@/components/ResearchCard";
@@ -12,10 +12,16 @@ const SUGGESTIONS = [
   "How effective are CRISPR-based therapies for sickle cell disease?",
 ];
 
-export default function DashboardPage() {
+function DashboardInner() {
   const router = useRouter();
-  const [question, setQuestion] = useState("");
-  const [depth, setDepth] = useState<ResearchDepth>("standard");
+  const params = useSearchParams();
+  // Supports being reached with a prefilled question, e.g. the "Edit
+  // question" link on the live run canvas — editing a running graph isn't
+  // meaningful once it's executing, so that link lands here to start fresh.
+  const [question, setQuestion] = useState(() => params.get("q") ?? "");
+  const [depth, setDepth] = useState<ResearchDepth>(
+    (params.get("depth") as ResearchDepth) || "standard"
+  );
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [starting, setStarting] = useState(false);
 
@@ -99,5 +105,13 @@ export default function DashboardPage() {
         </section>
       )}
     </main>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <DashboardInner />
+    </Suspense>
   );
 }

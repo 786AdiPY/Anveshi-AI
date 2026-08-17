@@ -5,13 +5,13 @@ import { usePathname } from "next/navigation";
 import { Plus, History, Settings, ShieldCheck } from "lucide-react";
 
 const links = [
-  { href: "/research/new", label: "New Research" },
+  { href: "/", label: "New Research" },
   { href: "/history", label: "History" },
   { href: "/settings", label: "Settings" },
 ];
 
 const iconFor: Record<string, typeof Plus> = {
-  "/research/new": Plus,
+  "/": Plus,
   "/history": History,
   "/settings": Settings,
 };
