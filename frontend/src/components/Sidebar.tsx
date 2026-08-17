@@ -21,7 +21,7 @@ export function Sidebar() {
 
   return (
     <header className="app-header">
-      <Link href="/" className="app-header__brand" aria-label="Pramaan AI home">
+      <Link href="/dashboard" className="app-header__brand" aria-label="Pramaan AI home">
         <span className="brand-mark" aria-hidden="true">
           <ShieldCheck size={18} strokeWidth={2.4} />
         </span>

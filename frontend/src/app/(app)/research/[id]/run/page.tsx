@@ -95,6 +95,7 @@ export default function LiveRunPage() {
 
   useEffect(() => {
     if (startedAt === null) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- ticking clock, not derived state
     setRuntime((Date.now() - startedAt) / 1000);
     const timer = setInterval(() => setRuntime((Date.now() - startedAt) / 1000), 1000);
     return () => clearInterval(timer);
@@ -165,7 +166,7 @@ export default function LiveRunPage() {
     <main className="page-container run-page">
       <div className="run-header">
         <div className="run-header-left">
-          <Link href="/" className="back-link">
+          <Link href="/dashboard" className="back-link">
             <ArrowLeft size={15} /> Back
           </Link>
           <span className={`status-badge status-badge-${status}`}>● {status}</span>

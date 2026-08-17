@@ -34,7 +34,7 @@ function ResearchNewInner() {
 
   return (
     <main className="page-container">
-      <button className="back-link" onClick={() => router.push("/")}>
+      <button className="back-link" onClick={() => router.push("/dashboard")}>
         <ArrowLeft size={15} /> Edit Question
       </button>
 
