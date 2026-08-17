@@ -53,6 +53,40 @@ from src.mock_data import MOCK_RESEARCH_RUNS
 # In-memory store for active and historical research runs, pre-populated with mock representation data
 RESEARCH_RUNS: Dict[str, Dict[str, Any]] = dict(MOCK_RESEARCH_RUNS)
 
+
+def _reconcile_orphaned_runs() -> None:
+    """
+    A run left "running" in persisted state (Supabase) belonged to a previous
+    process — nothing is actively working on it anymore, since the in-memory
+    RESEARCH_RUNS dict (and any background thread updating it) doesn't
+    survive a restart. Left alone, its run page would show a live-ticking
+    "started N minutes ago" timer forever. Mark those failed on startup so
+    they read correctly instead of appearing to hang indefinitely.
+    """
+    supabase = get_supabase()
+    if not supabase:
+        return
+    try:
+        stale = (
+            supabase.table(RESEARCH_RUNS_TABLE)
+            .select("id")
+            .eq("status", "running")
+            .execute()
+        )
+        for row in stale.data:
+            supabase.table(RESEARCH_RUNS_TABLE).update({
+                "status": "failed",
+                "error": "Run did not complete — the server restarted while it was in progress.",
+                "completed_at": datetime.utcnow().isoformat(),
+            }).eq("id", row["id"]).execute()
+        if stale.data:
+            logger.info(f"Reconciled {len(stale.data)} orphaned running run(s) from a previous process")
+    except Exception as e:
+        logger.warning(f"Orphaned-run reconciliation failed: {e}")
+
+
+_reconcile_orphaned_runs()
+
 # Hard ceiling on graph node executions per run. A full pass is roughly
 # Planner → Supervisor → sub-agent → Ledger → Verifier, repeated up to
 # max_verification_loops, then Synthesizer → EvidenceGraph — well under 40.
