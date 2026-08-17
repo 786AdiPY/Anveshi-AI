@@ -284,17 +284,18 @@ _GRAPH_DATA = {
     ],
 }
 
-# Ultra-fast snappy simulation (~12 seconds total):
+# Each step: (agent, delay_seconds_before_emitting, papers/claims/verified/contradictions counts so far)
+# Total simulation duration: 67s (1m 7s):
 _STEPS = [
-    ("planner_agent", 1, 0, 0, 0, 0),
-    ("supervisor_agent", 1, 0, 0, 0, 0),
-    ("literature_agent", 2, 4, 0, 0, 0),
-    ("extractor_agent", 1, 4, 5, 0, 0),
-    ("challenger_agent", 2, 4, 5, 0, 1),
-    ("ledger_agent", 1, 4, 5, 0, 1),
-    ("verifier_agent", 1, 4, 5, 4, 1),
-    ("synthesizer_agent", 2, 4, 5, 4, 1),
-    ("evidence_graph_agent", 1, 4, 5, 4, 1),
+    ("planner_agent", 6, 0, 0, 0, 0),
+    ("supervisor_agent", 3, 0, 0, 0, 0),
+    ("literature_agent", 14, 4, 0, 0, 0),
+    ("extractor_agent", 10, 4, 5, 0, 0),
+    ("challenger_agent", 9, 4, 5, 0, 1),
+    ("ledger_agent", 3, 4, 5, 0, 1),
+    ("verifier_agent", 8, 4, 5, 4, 1),
+    ("synthesizer_agent", 10, 4, 5, 4, 1),
+    ("evidence_graph_agent", 4, 4, 5, 4, 1),
 ]
 
 

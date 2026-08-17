@@ -186,10 +186,10 @@ export default function LiveRunPage() {
       const endAnchor = fullRun?.completed_at;
       if (startAnchor && endAnchor) {
         let diff = Math.max(0, (parseUTC(endAnchor) - parseUTC(startAnchor)) / 1000);
-        if (diff === 0 || diff > 300) diff = 12; 
+        if (diff === 0 || diff > 300) diff = 67; 
         setRuntime(diff);
       } else {
-        setRuntime(12);
+        setRuntime(67);
       }
       return;
     }
