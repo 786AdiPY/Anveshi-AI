@@ -108,7 +108,18 @@ function DashboardInner() {
   useEffect(() => {
     api
       .getHistory()
-      .then((r) => setHistory(r.history.filter((h) => h.status !== "failed")))
+      .then((r) => {
+        const seenQuestions = new Set<string>();
+        const valid = r.history
+          .filter((h) => h.status !== "failed")
+          .filter((h) => {
+            const q = h.question.trim().toLowerCase();
+            if (seenQuestions.has(q)) return false;
+            seenQuestions.add(q);
+            return true;
+          });
+        setHistory(valid);
+      })
       .catch(() => {});
   }, []);
 

@@ -60,7 +60,15 @@ function EvidenceGraphInner() {
     api
       .getHistory()
       .then((r) => {
-        const completed = r.history.filter((h) => h.has_report);
+        const seenQuestions = new Set<string>();
+        const completed = r.history
+          .filter((h) => h.has_report && h.status !== "failed")
+          .filter((h) => {
+            const q = h.question.trim().toLowerCase();
+            if (seenQuestions.has(q)) return false;
+            seenQuestions.add(q);
+            return true;
+          });
         setHistory(completed);
         if (!selectedId && completed.length > 0) {
           setSelectedId(completed[0].id);

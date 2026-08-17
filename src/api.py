@@ -411,11 +411,22 @@ def _history_row(r: Dict[str, Any]) -> Dict[str, Any]:
 @app.get("/api/research/history")
 async def get_history():
     """Get list of past and active research runs (in-memory + Supabase, deduplicated)."""
-    history = [_history_row(r) for r in RESEARCH_RUNS.values() if r.get("status") != "failed"]
+    raw_history = [_history_row(r) for r in RESEARCH_RUNS.values() if r.get("status") != "failed"]
     persisted = [r for r in fetch_persisted_history(exclude_ids=set(RESEARCH_RUNS.keys())) if r.get("status") != "failed"]
-    history += [_history_row(r) for r in persisted]
+    raw_history += [_history_row(r) for r in persisted]
 
-    history.sort(key=lambda h: h["created_at"], reverse=True)
+    seen_ids = set()
+    seen_questions = set()
+    history = []
+    raw_history.sort(key=lambda h: h["created_at"], reverse=True)
+
+    for item in raw_history:
+        q_norm = item["question"].strip().lower()
+        if item["id"] not in seen_ids and q_norm not in seen_questions:
+            seen_ids.add(item["id"])
+            seen_questions.add(q_norm)
+            history.append(item)
+
     return {"history": history}
 
 
