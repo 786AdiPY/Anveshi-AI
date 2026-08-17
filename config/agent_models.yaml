@@ -35,7 +35,7 @@ agents:
       model: openai/gpt-4o-mini
       temperature: 0.5
       max_tokens: 3072
-    max_iterations: 12
+    max_iterations: 6
     system_prompt_file: config/agents/literature/AGENT.md
 
   extractor_agent:
@@ -44,7 +44,7 @@ agents:
       model: openai/gpt-4o-mini
       temperature: 0.3
       max_tokens: 3072
-    max_iterations: 12
+    max_iterations: 6
     system_prompt_file: config/agents/extractor/AGENT.md
 
   challenger_agent:
@@ -53,7 +53,7 @@ agents:
       model: openai/gpt-4o-mini
       temperature: 0.7
       max_tokens: 3072
-    max_iterations: 12
+    max_iterations: 6
     system_prompt_file: config/agents/challenger/AGENT.md
 
   verifier_agent:

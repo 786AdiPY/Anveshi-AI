@@ -1,5 +1,5 @@
 """
-Pramaan AI — Challenger Agent (NEW)
+Anveshi AI — Challenger Agent (NEW)
 Adversarially searches for contradictory evidence, alternative explanations,
 methodological weaknesses, and negative results.
 """
@@ -27,7 +27,7 @@ class ChallengerAgent(BaseAgent):
     - Negative results
     - Conditions where the current conclusions fail
 
-    This is Pramaan AI's key differentiator for genuine multi-agent collaboration.
+    This is Anveshi AI's key differentiator for genuine multi-agent collaboration.
     """
 
     def __init__(

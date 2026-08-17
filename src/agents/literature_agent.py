@@ -1,5 +1,5 @@
 """
-Pramaan AI — Literature Researcher Agent
+Anveshi AI — Literature Researcher Agent
 Discovers scientific papers, preprints, and web sources relevant to the research question.
 """
 from __future__ import annotations

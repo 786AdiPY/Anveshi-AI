@@ -1,5 +1,5 @@
 """
-Pramaan AI — Evidence Graph Agent
+Anveshi AI — Evidence Graph Agent
 Generates structured graph data mapping Claims → Evidence → Papers → Contradictions.
 Replaces the old VisualizationAgent.
 """

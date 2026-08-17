@@ -1,5 +1,5 @@
 """
-Pramaan AI — LangGraph Router
+Anveshi AI — LangGraph Router
 Routing logic for the evidence-grounded research workflow.
 """
 from __future__ import annotations

@@ -1,5 +1,5 @@
 """
-Pramaan AI — Research Ledger Agent
+Anveshi AI — Research Ledger Agent
 Maintains the shared research state: structures entries, records agent events,
 and tracks token usage and cost. Replaces the old NoteAgent.
 """

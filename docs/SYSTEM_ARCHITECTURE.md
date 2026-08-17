@@ -1,6 +1,6 @@
 # System Architecture Overview
 
-This document provides a high-level overview of the Pramaan AI system architecture.
+This document provides a high-level overview of the Anveshi AI system architecture.
 
 ## Documentation Index
 
@@ -18,7 +18,7 @@ This document provides a high-level overview of the Pramaan AI system architectu
 
 ### Progressive Disclosure
 
-Pramaan AI uses a three-level loading strategy to optimize Context Window usage:
+Anveshi AI uses a three-level loading strategy to optimize Context Window usage:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐

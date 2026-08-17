@@ -1,6 +1,6 @@
 # 系統架構概覽
 
-本文檔提供 Pramaan AI 系統架構的高階概覽。
+本文檔提供 Anveshi AI 系統架構的高階概覽。
 
 ## 文檔索引
 
@@ -18,7 +18,7 @@
 
 ### 漸進式揭露 (Progressive Disclosure)
 
-Pramaan AI 採用三級載入策略，優化 Context Window 使用效率：
+Anveshi AI 採用三級載入策略，優化 Context Window 使用效率：
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐

@@ -12,6 +12,8 @@ from typing import Any, TYPE_CHECKING
 
 from langchain_openai import ChatOpenAI
 from langchain.agents import create_agent
+from langchain_core.messages import HumanMessage
+from langgraph.errors import GraphRecursionError
 
 from ..logger import setup_logger
 from ..config import WORKING_DIRECTORY
@@ -290,7 +292,55 @@ class BaseAgent(ABC):
         # full tool allowance still gets to reply instead of raising
         # GraphRecursionError.
         config = {"recursion_limit": self.max_iterations * 2 + 2}
-        return self.agent.invoke(state, config=config)
+
+        # An agent that keeps calling tools until the budget runs out raises
+        # GraphRecursionError, which would throw away everything it gathered.
+        # Stream instead, so the last state is still in hand, then ask the model
+        # for its answer one more time with the tools withheld.
+        last_chunk: Any = None
+        try:
+            for chunk in self.agent.stream(state, config=config, stream_mode="values"):
+                last_chunk = chunk
+            return last_chunk
+        except GraphRecursionError:
+            logger.warning(
+                f"{self.agent_name} hit its tool-call budget "
+                f"({self.max_iterations} iterations) — forcing a final answer."
+            )
+            return self._force_final_answer(last_chunk)
+
+    def _force_final_answer(self, last_chunk: Any) -> Any:
+        """Ask the model to answer from what it already gathered, without tools.
+
+        Args:
+            last_chunk: The most recent state seen while streaming, or None.
+
+        Returns:
+            An agent-shaped result dict, or the untouched chunk if no recovery
+            is possible.
+        """
+        messages = (last_chunk or {}).get("messages") if isinstance(last_chunk, dict) else None
+        if not messages:
+            return last_chunk
+
+        try:
+            model = self._create_model()
+            final = model.invoke(
+                list(messages)
+                + [
+                    HumanMessage(
+                        content=(
+                            "Stop searching. Using only what you have already "
+                            "gathered above, produce your final answer now in "
+                            "the exact output format your instructions specify."
+                        )
+                    )
+                ]
+            )
+            return {**last_chunk, "messages": list(messages) + [final]}
+        except Exception as e:
+            logger.error(f"Could not force a final answer for {self.agent_name}: {e}")
+            return last_chunk
 
     def _load_system_prompt(self) -> str:
         """Load system prompt from external config or fallback to hardcoded.

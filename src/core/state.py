@@ -18,7 +18,7 @@ from .schemas import (
 
 class State(BaseModel):
     """
-    Canonical shared state for the Pramaan AI multi-agent research workflow.
+    Canonical shared state for the Anveshi AI multi-agent research workflow.
     Stores both the LangGraph message log and all structured research artifacts.
     """
 

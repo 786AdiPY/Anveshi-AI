@@ -1,14 +1,14 @@
-# Pramaan AI
+# Anveshi AI
 
 **Author:** [786AdiPY](https://github.com/786AdiPY)
 
-## About Pramaan AI
-Pramaan AI is a powerful platform designed for automated data analysis and research through a multi-agent system.
+## About Anveshi AI
+Anveshi AI is a powerful platform designed for automated data analysis and research through a multi-agent system.
 
 ![System Architecture](./docs/Architecture.png)
 ## Overview
 
-Pramaan AI is an advanced AI-powered data analysis and research platform that utilizes multiple specialized agents to streamline tasks such as data analysis, visualization, and report generation. Our platform leverages cutting-edge technologies including LangChain, OpenAI's GPT models, and LangGraph to handle complex research processes, integrating diverse AI architectures for optimal performance.
+Anveshi AI is an advanced AI-powered data analysis and research platform that utilizes multiple specialized agents to streamline tasks such as data analysis, visualization, and report generation. Our platform leverages cutting-edge technologies including LangChain, OpenAI's GPT models, and LangGraph to handle complex research processes, integrating diverse AI architectures for optimal performance.
 
 ## Key Features
 
@@ -40,9 +40,9 @@ Pramaan AI is an advanced AI-powered data analysis and research platform that ut
   - Automated resource optimization
   - Real-time performance monitoring
 
-## Why Pramaan AI Stands Out
+## Why Anveshi AI Stands Out
 
-Pramaan AI revolutionizes data analysis through its innovative multi-agent architecture and intelligent automation capabilities:
+Anveshi AI revolutionizes data analysis through its innovative multi-agent architecture and intelligent automation capabilities:
 
 1. **Advanced Multi-Agent System**
    - Specialized agents working in harmony
@@ -67,12 +67,12 @@ Pramaan AI revolutionizes data analysis through its innovative multi-agent archi
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/786AdiPY/Pramaan-AI.git
+git clone https://github.com/786AdiPY/Anveshi-AI.git
 ```
 2. Create and activate a Conda virtual environment:
 ```bash
-conda create -n pramaan-ai python=3.10
-conda activate pramaan-ai
+conda create -n anveshi-ai python=3.10
+conda activate anveshi-ai
 ```
 3. Install dependencies:
 ```bash
@@ -92,7 +92,7 @@ WORKING_DIRECTORY = ./data/
 CONFIG_DIRECTORY = config
 
 # Conda environment name (required)
-CONDA_ENV = pramaan-ai
+CONDA_ENV = anveshi-ai
 
 # ChromeDriver executable path (required)
 CHROMEDRIVER_PATH = ./chromedriver-linux64/chromedriver
@@ -202,7 +202,7 @@ agents:
 
 ## Advanced Configuration System
 
-Pramaan AI implements a powerful **Progressive Disclosure** architecture for agent configuration, inspired by [Claude Agent Skills](https://platform.claude.com/docs/agents-and-tools/agent-skills/overview).
+Anveshi AI implements a powerful **Progressive Disclosure** architecture for agent configuration, inspired by [Claude Agent Skills](https://platform.claude.com/docs/agents-and-tools/agent-skills/overview).
 
 ### Documentation
 
@@ -227,7 +227,7 @@ Pramaan AI implements a powerful **Progressive Disclosure** architecture for age
 - Ensure you have sufficient API credits, as the system will make multiple API calls.
 - The system may take some time to complete the entire research process, depending on the complexity of the task.
 - **WARNING**: The agent system may modify the data being analyzed. It is highly recommended to backup your data before using this system.
-- Pramaan AI does not ship or train on project-provided training datasets. Users provide their own analysis data at runtime through `WORKING_DIRECTORY`.
+- Anveshi AI does not ship or train on project-provided training datasets. Users provide their own analysis data at runtime through `WORKING_DIRECTORY`.
 
 ## Current Issues and Solutions
 1. NoteTaker Efficiency Improvement
@@ -243,7 +243,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Star History
 
-[![Star History Chart](https://star-history.dera.page/svg?repos=786AdiPY/Pramaan-AI&type=Date)](https://star-history.dera.page/#786AdiPY/Pramaan-AI&type=Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=786AdiPY/Anveshi-AI&type=Date)](https://star-history.dera.page/#786AdiPY/Anveshi-AI&type=Date)
 
 ## Other Projects
 Here are some of my other notable projects:

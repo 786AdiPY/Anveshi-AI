@@ -1,5 +1,5 @@
 """
-Pramaan AI — Supervisor Agent
+Anveshi AI — Supervisor Agent
 Central coordinator: assigns tasks to sub-agents and handles verification retry loops.
 """
 from __future__ import annotations

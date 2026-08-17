@@ -1,4 +1,4 @@
-# Pramaan AI — Exact Implementation Plan
+# Anveshi AI — Exact Implementation Plan
 
 > **Goal:** Keep the existing LangGraph orchestration skeleton, but replace its data-analysis purpose with our own evidence-grounded research agent.
 
@@ -246,7 +246,7 @@ shows agents, evidence graph, verification decisions, contradictions, cost, and 
 
 ## Final Product
 
-**Pramaan AI — Research you can verify.**
+**Anveshi AI — Research you can verify.**
 
 The winning demo should show:
 

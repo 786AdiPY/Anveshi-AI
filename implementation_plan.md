@@ -1,6 +1,6 @@
-# Implementation Plan - Pramaan AI Evidence-Grounded Research Agent Refactor
+# Implementation Plan - Anveshi AI Evidence-Grounded Research Agent Refactor
 
-This plan outlines the architecture, code refactoring, data models, state graph topology, and agent implementation required to repurpose the existing multi-agent infrastructure into **Pramaan AI — Evidence-Grounded Research Agent**.
+This plan outlines the architecture, code refactoring, data models, state graph topology, and agent implementation required to repurpose the existing multi-agent infrastructure into **Anveshi AI — Evidence-Grounded Research Agent**.
 
 ## User Review Required
 
@@ -143,14 +143,14 @@ This plan outlines the architecture, code refactoring, data models, state graph 
 
 ---
 
-### Frontend — Pramaan AI UI (Next.js)
+### Frontend — Anveshi AI UI (Next.js)
 
 - [x] #### Frontend Project Setup
   - Initialize Next.js project in `frontend/` with TypeScript, App Router, and Vanilla CSS.
   - Install dependencies: `react-flow` (for n8n-style agent canvas), `@xyflow/react`, `lucide-react` (icons).
 
 - [x] #### [NEW] [frontend/src/app/page.tsx](file:///home/adi/Desktop/Hackathons/research-agent/frontend/src/app/page.tsx) — **Main Dashboard** `/`
-  - Left sidebar: Pramaan AI logo, New Research, Research History, Saved Reports, Settings links.
+  - Left sidebar: Anveshi AI logo, New Research, Research History, Saved Reports, Settings links.
   - Main area: Large research question input, file upload zone, research depth selector (Quick / Standard / Deep), `Start Research` button.
   - Below: Suggested research prompts, recent research history cards (title, date, status, source count).
 

@@ -1,6 +1,6 @@
 # Quick Start
 
-This guide helps you quickly configure Pramaan AI's agent system.
+This guide helps you quickly configure Anveshi AI's agent system.
 
 ## Prerequisites
 - Complete basic installation (see [README.md](../README.md#installation))

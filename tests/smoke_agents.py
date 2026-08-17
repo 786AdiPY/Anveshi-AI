@@ -1,5 +1,5 @@
 """
-Smoke test: instantiate every Pramaan AI agent and make one real LLM call each.
+Smoke test: instantiate every Anveshi AI agent and make one real LLM call each.
 
 Verifies the configured model can actually be reached and can drive each agent
 (tool binding, structured output, prompt loading) before running a full graph.

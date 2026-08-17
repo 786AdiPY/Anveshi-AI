@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Save, AlertCircle } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-const THEME_KEY = "pramaan-theme";
+const THEME_KEY = "anveshi-theme";
 
 interface Settings {
   default_model: string;
@@ -197,17 +197,17 @@ function SettingsInner() {
 
         {tab === "about" && (
           <>
-            <h2 className="settings-section-title">About Pramaan AI</h2>
+            <h2 className="settings-section-title">About Anveshi AI</h2>
             <p className="settings-about-body">
-              Pramaan AI is an evidence-grounded multi-agent research system. A Planner breaks
+              Anveshi AI is an evidence-grounded multi-agent research system. A Planner breaks
               down your question, a Literature agent and Extractor build a claim/evidence base, a
               Challenger actively searches for counter-evidence, and a Verifier gates every claim
               before the Synthesizer writes the final brief.
             </p>
             <p className="settings-about-body muted">
               Source:{" "}
-              <a href="https://github.com/786AdiPY/Pramaan-AI" target="_blank" rel="noopener noreferrer">
-                github.com/786AdiPY/Pramaan-AI
+              <a href="https://github.com/786AdiPY/Anveshi-AI" target="_blank" rel="noopener noreferrer">
+                github.com/786AdiPY/Anveshi-AI
               </a>
             </p>
           </>

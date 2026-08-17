@@ -1,5 +1,5 @@
 """
-Pramaan AI — LangGraph Node Handlers
+Anveshi AI — LangGraph Node Handlers
 Wraps agent invocations and provides the optional plan-review human node.
 """
 from __future__ import annotations
@@ -96,11 +96,11 @@ def get_structured_output(result: Any, agent: "BaseAgent") -> Any:
 
 
 # ---------------------------------------------------------------------------
-# Generic agent node — used for ALL Pramaan AI agents
+# Generic agent node — used for ALL Anveshi AI agents
 # ---------------------------------------------------------------------------
 
 def agent_node(state: "State", agent: "BaseAgent", name: str) -> dict[str, Any]:
-    """Invoke a Pramaan AI agent and merge its state updates."""
+    """Invoke a Anveshi AI agent and merge its state updates."""
     logger.info(f"Processing agent: {name}")
     try:
         result = agent.invoke(state)
@@ -181,7 +181,7 @@ def human_plan_review_node(state: "State") -> dict[str, Any]:
         return {"current_instruction": "Continue the research process"}
 
     print("\n" + "=" * 60)
-    print("PRAMAAN AI — RESEARCH PLAN REVIEW")
+    print("ANVESHI AI — RESEARCH PLAN REVIEW")
     print("=" * 60)
     print(f"\nResearch Question:\n  {rq.query}")
     print("\nSubquestions:")

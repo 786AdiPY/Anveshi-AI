@@ -1,5 +1,5 @@
 """
-Pramaan AI — FastAPI Server & Real-time SSE Endpoint
+Anveshi AI — FastAPI Server & Real-time SSE Endpoint
 Exposes research execution, state streaming, evidence graph, and settings to the frontend.
 """
 from __future__ import annotations
@@ -24,7 +24,7 @@ from src.logger import setup_logger
 logger = setup_logger()
 
 app = FastAPI(
-    title="Pramaan AI API",
+    title="Anveshi AI API",
     description="Evidence-Grounded Multi-Agent Research Engine API",
     version="1.0.0",
 )
@@ -47,6 +47,11 @@ RESEARCH_RUNS: Dict[str, Dict[str, Any]] = {}
 # thousands of billed API calls.
 GRAPH_RECURSION_LIMIT = int(os.getenv("GRAPH_RECURSION_LIMIT", "60"))
 
+# "lean"  — deterministic search plus a single synthesis call (default).
+# "agents" — the full nine-agent graph, which needs a provider tier with
+#            headroom well above a free per-minute token budget.
+RESEARCH_MODE = os.getenv("RESEARCH_MODE", "lean").strip().lower()
+
 
 def persist_run(run_entry: Dict[str, Any]) -> None:
     """
@@ -61,10 +66,10 @@ def persist_run(run_entry: Dict[str, Any]) -> None:
     try:
         supabase.table(RESEARCH_RUNS_TABLE).upsert({
             "id": run_entry["id"],
-            "question": run_entry["question"],
-            "depth": run_entry["depth"],
+            "question": run_entry.get("question", ""),
+            "depth": run_entry.get("depth", "standard"),
             "status": run_entry["status"],
-            "created_at": run_entry["created_at"],
+            "created_at": run_entry.get("created_at"),
             "started_at": run_entry.get("started_at"),
             "completed_at": run_entry.get("completed_at"),
             "error": run_entry.get("error"),
@@ -128,8 +133,68 @@ SETTINGS_STORE: Dict[str, Any] = {
 }
 
 
+def _dump(items: list) -> list:
+    return [i.model_dump() if hasattr(i, "model_dump") else i for i in items]
+
+
+def run_lean_background(run_id: str, question: str):
+    """Run the single-call pipeline: deterministic search, then one synthesis."""
+    from .core.lean_pipeline import run_lean_research
+    from .core.language_models import LanguageModelManager
+
+    run_entry = RESEARCH_RUNS[run_id]
+    run_entry["status"] = "running"
+    run_entry["started_at"] = datetime.utcnow().isoformat()
+    persist_run(run_entry)
+
+    def model_factory():
+        manager = LanguageModelManager()
+        config = dict(manager.get_model_config("synthesizer_agent"))
+        config.setdefault("timeout", 90)
+        return manager.get_provider("synthesizer_agent").get_model_class()(**config)
+
+    def on_progress(stage: str, state: dict):
+        run_entry["events"].append({
+            "timestamp": datetime.utcnow().isoformat(),
+            "agent": "literature_agent" if stage == "search" else "synthesizer_agent",
+            "step_count": len(run_entry["events"]) + 1,
+            "papers_count": len(state.get("papers", [])),
+            "claims_count": len(state.get("claims", [])),
+            "verified_count": 0,
+            "contradictions_count": 0,
+            "status": "completed" if state.get("research_brief") else "running",
+            "error": None,
+        })
+        run_entry["latest_state"] = {
+            "papers": _dump(state.get("papers", [])),
+            "claims": _dump(state.get("claims", [])),
+            "evidence": [],
+            "contradictions": [],
+            "verification_results": [],
+            "research_brief": state.get("research_brief"),
+            "evidence_graph_data": state.get("evidence_graph_data", {}),
+        }
+        persist_run(run_entry)
+
+    try:
+        state = run_lean_research(question, model_factory, on_progress)
+        run_entry["status"] = "completed" if state.get("research_brief") else "failed"
+        run_entry["error"] = state.get("last_error")
+        run_entry["completed_at"] = datetime.utcnow().isoformat()
+        persist_run(run_entry)
+    except Exception as e:
+        logger.error(f"Error executing research run {run_id}: {e}", exc_info=True)
+        run_entry["status"] = "failed"
+        run_entry["error"] = str(e)
+        run_entry["completed_at"] = datetime.utcnow().isoformat()
+        persist_run(run_entry)
+
+
 def run_research_background(run_id: str, question: str):
     """Execute the multi-agent graph in a background task and collect event logs."""
+    if RESEARCH_MODE == "lean":
+        return run_lean_background(run_id, question)
+
     run_entry = RESEARCH_RUNS[run_id]
     run_entry["status"] = "running"
     run_entry["started_at"] = datetime.utcnow().isoformat()

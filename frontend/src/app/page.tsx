@@ -80,7 +80,7 @@ function Nav() {
     <header className={`lp-nav ${scrolled ? "is-scrolled" : ""}`}>
       <a className="lp-nav__brand" href="#top">
         <Mark />
-        <span>Pramaan AI</span>
+        <span>Anveshi AI</span>
       </a>
       <nav className="lp-nav__links" aria-label="Sections">
         <a href="#problem">Problem</a>
@@ -164,7 +164,7 @@ function Hero() {
 
         <Reveal className="lp-hero__lead" delay={4}>
           <p>
-            Pramaan AI plans a research question, finds the literature, and extracts claims —
+            Anveshi AI plans a research question, finds the literature, and extracts claims —
             then turns an adversarial agent loose on its own findings. Nothing reaches your
             report until the Verifier can trace it back to a real source.
           </p>
@@ -480,7 +480,7 @@ const CLAIMS = [
 ];
 
 const TERMINAL = [
-  { t: "cmd", v: 'pramaan research "RAG vs fine-tuning for enterprise LLMs?"' },
+  { t: "cmd", v: 'anveshi research "RAG vs fine-tuning for enterprise LLMs?"' },
   { t: "out", v: "planner      3 subquestions · 7 search queries" },
   { t: "out", v: "literature   14 sources discovered" },
   { t: "out", v: "extractor    9 claims extracted" },
@@ -760,7 +760,7 @@ function Footer() {
       <div className="lp-wrap lp-footer__in">
         <a className="lp-nav__brand" href="#top">
           <Mark />
-          <span>Pramaan AI</span>
+          <span>Anveshi AI</span>
         </a>
         <nav aria-label="Footer">
           <Link href="/dashboard">Console</Link>

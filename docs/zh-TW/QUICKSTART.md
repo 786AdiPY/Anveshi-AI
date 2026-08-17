@@ -1,6 +1,6 @@
 # 快速開始
 
-本指南幫助您快速配置 Pramaan AI 的 Agent 系統。
+本指南幫助您快速配置 Anveshi AI 的 Agent 系統。
 
 ## 前提條件
 - 確保已完成基本安裝 (參閱 [README.md](../../README.md#installation))

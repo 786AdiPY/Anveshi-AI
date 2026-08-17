@@ -1,4 +1,4 @@
-# Pramaan AI — UI Execution Plan
+# Anveshi AI — UI Execution Plan
 
 ## Page 1 — Main Dashboard `/`
 
@@ -7,7 +7,7 @@
 ### Contents
 
 **Left sidebar**
-- Pramaan AI logo
+- Anveshi AI logo
 - New Research
 - Research History
 - Saved Reports

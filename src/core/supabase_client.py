@@ -1,5 +1,5 @@
 """
-Pramaan AI — Supabase persistence client.
+Anveshi AI — Supabase persistence client.
 
 Lazily creates a single Supabase client from SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY.
 Returns None when either is unset so the API keeps working against the

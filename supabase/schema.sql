@@ -1,4 +1,4 @@
--- Pramaan AI — Supabase schema
+-- Anveshi AI — Supabase schema
 --
 -- Run this once in the Supabase SQL editor (or `supabase db push` if you use
 -- the CLI) before setting SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY in .env.

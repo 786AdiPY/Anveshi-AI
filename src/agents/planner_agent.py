@@ -1,5 +1,5 @@
 """
-Pramaan AI — Planner Agent
+Anveshi AI — Planner Agent
 Decomposes the research question into subquestions, hypotheses, and search queries.
 """
 from __future__ import annotations

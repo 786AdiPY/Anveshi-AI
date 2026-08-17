@@ -8,7 +8,7 @@ WORKING_DIRECTORY = ./data/
 CONFIG_DIRECTORY = config
 
 # Conda environment name(required)
-CONDA_ENV = pramaan-ai
+CONDA_ENV = anveshi-ai
 
 # ChromeDriver executable path(required)
 CHROMEDRIVER_PATH = ./chromedriver-linux64/chromedriver

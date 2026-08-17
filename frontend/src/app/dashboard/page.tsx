@@ -99,7 +99,7 @@ function DashboardInner() {
       <section className="hero">
         <h1>What do you want to research?</h1>
         <p className="hero-sub">
-          Pramaan AI searches the literature, extracts claims, challenges them with counter-evidence,
+          Anveshi AI searches the literature, extracts claims, challenges them with counter-evidence,
           and verifies every conclusion before reporting.
         </p>
 

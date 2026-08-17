@@ -39,12 +39,12 @@ export function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <Link href="/" className="sidebar-brand" aria-label="Pramaan AI home">
+      <Link href="/" className="sidebar-brand" aria-label="Anveshi AI home">
         <span className="brand-mark" aria-hidden="true">
           <ShieldCheck size={18} strokeWidth={2.4} />
         </span>
         <span className="sidebar-brand-text">
-          <span className="sidebar-brand-name">Pramaan AI</span>
+          <span className="sidebar-brand-name">Anveshi AI</span>
           <span className="sidebar-brand-sub">Evidence-Grounded Research</span>
         </span>
       </Link>

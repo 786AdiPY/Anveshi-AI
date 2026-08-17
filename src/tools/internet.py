@@ -32,8 +32,8 @@ _SEARCH_TIMEOUT = 30
 # Tool output goes straight into the agent's context and is resent on every
 # subsequent turn, so untrimmed snippets and page dumps blow the provider's
 # per-minute token limit within a few tool calls.
-_SNIPPET_CHARS = 400
-_SCRAPE_CHARS = 6000
+_SNIPPET_CHARS = 250
+_SCRAPE_CHARS = 4000
 
 
 def _truncate(text: str, limit: int) -> str:
@@ -182,7 +182,7 @@ def google_search(query: Annotated[str, "The search query to use"]) -> Annotated
     errors = []
     for name, backend in backends:
         try:
-            results = backend(query, 5)
+            results = backend(query, 4)
         except Exception as e:
             logger.warning(f"{name} search failed: {e}")
             errors.append(f"{name}: {e}")
@@ -290,11 +290,11 @@ def scrape_webpages(urls: Annotated[List[str], "List of URLs to scrape"]) -> Ann
     except Exception as e:
         logger.warning(f"fastCRW scraping failed: {str(e)}. Falling back to FireCrawl.")
     try:
-        return _firecrawl_scrape_webpages(urls)
+        return _truncate(_firecrawl_scrape_webpages(urls), _SCRAPE_CHARS)
     except Exception as e:
         logger.warning(f"FireCrawl scraping failed: {str(e)}. Falling back to WebBaseLoader.")
         try:
-            return _scrape_webpages(urls)
+            return _truncate(_scrape_webpages(urls), _SCRAPE_CHARS)
         except Exception as e:
             logger.error(f"Both scraping methods failed. Error: {str(e)}")
             return f"Error: Unable to scrape webpages using both methods. {str(e)}"

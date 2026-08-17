@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Pramaan AI — start the FastAPI backend and the Next.js frontend together.
+# Anveshi AI — start the FastAPI backend and the Next.js frontend together.
 #
 #   ./run.sh
 #

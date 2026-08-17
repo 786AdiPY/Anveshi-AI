@@ -11,7 +11,7 @@ from ..config import WORKING_DIRECTORY
 
 
 class AgentFactory:
-    """Factory for creating Pramaan AI research agents."""
+    """Factory for creating Anveshi AI research agents."""
 
     def __init__(self, language_model_manager, team_members, working_directory=WORKING_DIRECTORY):
         self.language_model_manager = language_model_manager
