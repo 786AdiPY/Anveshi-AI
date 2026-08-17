@@ -498,6 +498,29 @@ async def list_datasets():
     return {"working_directory": base, "datasets": datasets}
 
 
+@app.delete("/api/research/{run_id}")
+async def delete_research_run(run_id: str):
+    """
+    Remove a run from history/dashboard — in-memory and Supabase. This only
+    ever deletes a run *record*; it has no relationship to and never touches
+    src/demo_simulation.py, which stays intact regardless.
+    """
+    found = run_id in RESEARCH_RUNS
+    RESEARCH_RUNS.pop(run_id, None)
+
+    supabase = get_supabase()
+    if supabase:
+        try:
+            supabase.table(RESEARCH_RUNS_TABLE).delete().eq("id", run_id).execute()
+            found = True
+        except Exception as e:
+            logger.warning(f"Supabase delete failed for run {run_id}: {e}")
+
+    if not found:
+        raise HTTPException(status_code=404, detail="Research run not found")
+    return {"id": run_id, "deleted": True}
+
+
 @app.get("/api/settings")
 async def get_settings():
     return SETTINGS_STORE
